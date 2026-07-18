@@ -1,0 +1,7 @@
+no more csLADSPA plugins
+Found 531 LADSPA plugins
+JackDriver: client name is 'SuperCollider'
+SC_AudioDriver: sample rate = 48000.000000, driver's block size = 1024
+SuperCollider 3 server ready.
+Zeroconf: registered service 'SuperCollider'
+/notify : already registered

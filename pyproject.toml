@@ -22,6 +22,10 @@ test = [
     "httpx>=0.27,<1",
     "pytest>=8,<10",
 ]
+rehearsal = [
+    "python-osc>=1.8,<2",
+    "soundfile>=0.12,<1",
+]
 
 [project.scripts]
 harmonic-weaver-weaver = "harmonic_weaver.weaver:main"

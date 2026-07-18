@@ -1,0 +1,67 @@
+{
+  "scene_id": "sparse",
+  "scene_version": 1,
+  "name": "Sparse Interlude",
+  "description": "A deliberately small hot-swap scene retaining head, crowd, and heartbeat motion.",
+  "tags": ["rehearsal", "hot-swap", "sparse"],
+  "created_at_us": 0,
+  "updated_at_us": 0,
+  "aggregators": [
+    {
+      "aggregator_id": "sparse-focused-head-y",
+      "aggregator_version": 1,
+      "derived_source_id": "sparse_head",
+      "output_channel": "y",
+      "inputs": [
+        {"channel": "harmocap.slot_0_keypoint_nose_y", "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}},
+        {"channel": "harmocap.slot_1_keypoint_nose_y", "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}}
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 30.0},
+      "validity": {"min_valid_count": 1, "min_observed_count": 1, "max_age_ms": 250.0, "include_held": false, "held_max_ms": 0.0, "confidence": "minimum"}
+    },
+    {
+      "aggregator_id": "sparse-non-focused-energy",
+      "aggregator_version": 1,
+      "derived_source_id": "sparse_crowd",
+      "output_channel": "energy",
+      "inputs": [
+        {"channel": "harmocap.slot_0_kinetic_energy", "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 0.0}},
+        {"channel": "harmocap.slot_1_kinetic_energy", "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 0.0}}
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 20.0},
+      "validity": {"min_valid_count": 1, "min_observed_count": 1, "max_age_ms": 250.0, "include_held": false, "held_max_ms": 0.0, "confidence": "minimum"}
+    }
+  ],
+  "routes": [
+    {
+      "route_id": "sparse-head-to-harmonic-5",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "sparse_head.y"}],
+      "transforms": [{"type": "scale_range", "in": [0.0, 1.0], "out": [0.0, 0.42], "clamp": true}],
+      "destination": {"instrument_id": "shaper", "capability": "harmonic_gain", "bindings": {"N": 5}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    },
+    {
+      "route_id": "sparse-crowd-to-beacon-band-3",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "sparse_crowd.energy"}],
+      "transforms": [{"type": "scale_range", "in": [0.0, 1.0], "out": [0.20, 1.10], "clamp": true}],
+      "destination": {"instrument_id": "beacon-spatial", "capability": "band_gain", "bindings": {"N": 3}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    },
+    {
+      "route_id": "sparse-ecg-to-nature-pulse",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "ecg.beat"}],
+      "transforms": [{"type": "gate", "threshold": 0.5, "hysteresis": 0.1, "mode": "rising_edge", "closed": {"value": 0.04}}],
+      "destination": {"instrument_id": "beacon-spatial", "capability": "nature_gain", "bindings": {}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    }
+  ],
+  "transition": {"policy": "crossfade", "duration_ms": 500.0, "await_valid_ms": 750.0}
+}

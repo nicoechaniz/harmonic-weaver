@@ -1,0 +1,152 @@
+compiling class library...
+	Found 867 primitives.
+	Compiling directory '/usr/share/SuperCollider/SCClassLibrary'
+	Compiling directory '/usr/share/SuperCollider/Extensions'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/Extensions'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/MathLib'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/FileLog'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/ExtraWindows'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/SignalBox'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/Hilbert'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/XML'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/wslib'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/MatrixArray'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/PointView'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/SphericalDesign'
+	Compiling directory '/home/nicolas/.local/share/SuperCollider/downloaded-quarks/atk-sc3'
+	numentries = 1668230 / 34881918 = 0.048
+	8373 method selectors, 4166 classes
+	method table size 31829480 bytes, big table size 279055344
+	Number of Symbols 21780
+	Byte Code Size 854195
+	compiled 879 files in 0.71 seconds
+
+Info: 9 methods are currently overwritten by extensions. To see which, execute:
+MethodOverride.printAll
+
+compile done
+localhost : setting clientID to 0.
+internal : setting clientID to 0.
+Class tree inited in 0.01 seconds
+
+
+*** Welcome to SuperCollider 3.13.0. *** For help type ctrl-c ctrl-h (Emacs) or :SChelp (vim) or ctrl-U (sced/gedit).
+beacon : setting clientID to 0.
+
+========================================
+  BEACON SPATIALIZER (ATK FOA)          
+  12 BPF + 1 HPF binaural (Listen HRTF)
+========================================
+SC: 3.13.0  |  ATK kernels: /home/nicolas/.local/share/ATK/kernels
+MODE: FILE — harmonic_beacon_2026_05_13_session.wav
+
+OSC listen rule: 127.0.0.1:57120
+scsynth (audio engine) on 57110 (external, started by start-beacon.sh).
+Launch via: ./start-beacon.sh [--live|--file] [--osc-host HOST] [--osc-port PORT]
+
+Requested notification messages from server 'beacon'
+beacon: server process has maxLogins 64 - adjusting my options accordingly.
+ERROR: maxLogins should be <= 32, tried to set to 64
+CALL STACK:
+	Exception:reportError
+		arg this = <instance of Error>
+	Nil:handleError
+		arg this = nil
+		arg error = <instance of Error>
+	Thread:handleError
+		arg this = <instance of Thread>
+		arg error = <instance of Error>
+	Object:throw
+		arg this = <instance of Error>
+	ServerOptions:maxLogins_
+		arg this = <instance of ServerOptions>
+		arg logins = 64
+	Server:prHandleClientLoginInfoFromServer
+		arg this = <instance of Server>
+		arg newClientID = 0
+		arg newMaxLogins = 64
+	< FunctionDef in Method ServerStatusWatcher:prSendNotifyRequest >
+		arg msg = [*4]
+		var newClientID = 0
+		var newMaxLogins = 64
+	OSCArgsMatcher:value
+		arg this = <instance of OSCArgsMatcher>
+		arg testMsg = [*4]
+		arg time = 2.092186803
+		arg addr = <instance of NetAddr>
+		arg recvPort = 57120
+		var msgArgs = [*3]
+	OSCFuncAddrMessageMatcher:value
+		arg this = <instance of OSCFuncAddrMessageMatcher>
+		arg msg = [*4]
+		arg time = 2.092186803
+		arg testAddr = <instance of NetAddr>
+		arg recvPort = 57120
+	OSCMessageDispatcher:value
+		arg this = <instance of OSCMessageDispatcher>
+		arg msg = [*4]
+		arg time = 2.092186803
+		arg addr = <instance of NetAddr>
+		arg recvPort = 57120
+	Main:recvOSCmessage
+		arg this = <instance of Main>
+		arg time = 2.092186803
+		arg replyAddr = <instance of NetAddr>
+		arg recvPort = 57120
+		arg msg = [*4]
+^^ The preceding error dump is for ERROR: maxLogins should be <= 32, tried to set to 64
+Requested notification messages from server 'beacon'
+beacon - already registered with clientID 0.
+beacon - handling login request though already registered - 
+This seems to be a login after a loss of network contact - 
+- reconnected with the same clientID as before, so probably all is well.
+
+Server booted (2in/2out @ 48000Hz).
+Loading buffer: harmonic_beacon_2026_05_13_session.wav ...
+  Buffer ready: bufnum=0, 345600000 frames, 7200.0s
+Loading FoaDecoderKernel.newListen(1002, 48000Hz, 512-sample kernels)...
+Kernel HRIR_W.wav, channel 0 loaded.
+Kernel HRIR_W.wav, channel 1 loaded.
+Kernel HRIR_X.wav, channel 0 loaded.
+Kernel HRIR_X.wav, channel 1 loaded.
+Kernel HRIR_Y.wav, channel 0 loaded.
+Kernel HRIR_Y.wav, channel 1 loaded.
+Kernel HRIR_Z.wav, channel 0 loaded.
+Kernel HRIR_Z.wav, channel 1 loaded.
+  Decoder kernel ready (allow ~11ms latency from 512-sample HRIR).
+Defining SynthDef % ...
+SynthDefs % and \sample_player added.
+Synth active: nodeID=1000  (headphones required for binaural)
+OSCdefs registered: 72 native addresses + hello request + state request (74 total).
+
+========================================
+  BEACON READY                          
+  OSC 127.0.0.1:57120 | scsynth 127.0.0.1:57110
+========================================
+Bands 1-6 : [ 40, 80, 120, 160, 200, 240 ] Hz (40Hz BW)
+Bands 7-12: [ 480, 720, 960, 1200, 1440, 1680 ] Hz (240Hz BW)
+Band 13   : HPF 1800Hz+
+Initial gains: [ 1.2, 1.0, 1.0, 1.0, 1.0, 1.3, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ]   (0-3)
+Initial az:    [ 180, 135, -90, -45, 45, 0, 0, 0, 0, 0, 0, 0, 0 ] deg (-180..180)
+Initial dist:  [ 2.0, 2.5, 3.0, 2.5, 2.0, 1.5, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0 ]   (0-10)
+mix=0.85, master=0.9
+
+Signal: PlayBuf -> BPF*12 + HPF*1 -> FoaPanB(az.rad, 1/dist) -> B-format
+        -> FoaDecode(Listen) = wet   |   Mix(filters*gains) * (1-mix)
+        -> (wet + dry) * master -> stereo out
+
+No LFOs, no reverb, no extra effects (plain FoaPanB + 1/dist only).
+To stop: ctrl-. (or s.quit; decoder.free; buf.free; 0.exit; )
+
+sclang waiting for OSC...
+[NATURE] Accepted OSC load argument type: Symbol.
+[NATURE] Loading: /home/nicolas/Projects/beacon-spatial/assets/nature-samples/dominicalito_frogs_pond.wav
+[NATURE] Active: /home/nicolas/Projects/beacon-spatial/assets/nature-samples/dominicalito_frogs_pond.wav (source channels=1, buffer channels=2)
+[RECORD] Started: /home/nicolas/Projects/harmonic-weaver/rehearsal/artifacts/t45-20260718T105726Z/audio/beacon_master_rehearsal.wav
+Preparing recording on 'beacon'
+Recording channels [ 0, 1 ] ... 
+path: '/home/nicolas/Projects/harmonic-weaver/rehearsal/artifacts/t45-20260718T105726Z/audio/beacon_master_rehearsal.wav'
+Recording Stopped: (beacon_master_rehearsal.wav)
+[RECORD] Stopped.
+
+Session terminated, killing shell...

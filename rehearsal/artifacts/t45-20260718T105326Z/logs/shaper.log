@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/nicolas/Projects/harmonic-shaper/src/harmonic_shaper/__main__.py", line 7, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/home/nicolas/Projects/harmonic-shaper/src/harmonic_shaper/main.py", line 120, in main
+    osc = ShaperOSCReceiver(
+        store,
+    ...<3 lines>...
+        slave=args.slave,
+    )
+  File "/home/nicolas/Projects/harmonic-shaper/src/harmonic_shaper/osc_receiver.py", line 57, in __init__
+    raise ImportError("python-osc is required for OSC control")
+ImportError: python-osc is required for OSC control

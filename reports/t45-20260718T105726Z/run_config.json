@@ -1,0 +1,1 @@
+{"bind_host":"127.0.0.1","bind_port":8765,"claims":{"audible_audio":false,"hardware":false},"drivers":["harmocap","ecg","midi"],"instrument_transport":"live OSC/UDP","midi_hardware":false,"mode":"headless","r24_hardware":false,"run_id":"t45-20260718T105726Z","shaper_audio":"disabled (--no-audio); state API is the evidence plane","started_at_us":1784372257564287}

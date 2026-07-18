@@ -1,0 +1,155 @@
+{
+  "scene_id": "event-demo",
+  "scene_version": 1,
+  "name": "Event Demo",
+  "description": "Focused HarMoCAP subject drives five Shaper harmonics, the non-focused person drives Beacon master gain, and ECG beat edges pulse the bounded nature layer.",
+  "tags": ["rehearsal", "event-demo", "hardware-free"],
+  "created_at_us": 0,
+  "updated_at_us": 0,
+  "aggregators": [
+    {
+      "aggregator_id": "focused-left-wrist-y",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_left_wrist",
+      "output_channel": "y",
+      "inputs": [
+        {"channel": "harmocap.slot_0_keypoint_left_wrist_y", "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}},
+        {"channel": "harmocap.slot_1_keypoint_left_wrist_y", "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}}
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {"min_valid_count": 1, "min_observed_count": 1, "max_age_ms": 250.0, "include_held": false, "held_max_ms": 0.0, "confidence": "minimum"}
+    },
+    {
+      "aggregator_id": "focused-right-wrist-y",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_right_wrist",
+      "output_channel": "y",
+      "inputs": [
+        {"channel": "harmocap.slot_0_keypoint_right_wrist_y", "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}},
+        {"channel": "harmocap.slot_1_keypoint_right_wrist_y", "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}}
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {"min_valid_count": 1, "min_observed_count": 1, "max_age_ms": 250.0, "include_held": false, "held_max_ms": 0.0, "confidence": "minimum"}
+    },
+    {
+      "aggregator_id": "focused-left-ankle-y",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_left_ankle",
+      "output_channel": "y",
+      "inputs": [
+        {"channel": "harmocap.slot_0_keypoint_left_ankle_y", "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}},
+        {"channel": "harmocap.slot_1_keypoint_left_ankle_y", "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}}
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {"min_valid_count": 1, "min_observed_count": 1, "max_age_ms": 250.0, "include_held": false, "held_max_ms": 0.0, "confidence": "minimum"}
+    },
+    {
+      "aggregator_id": "focused-right-ankle-y",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_right_ankle",
+      "output_channel": "y",
+      "inputs": [
+        {"channel": "harmocap.slot_0_keypoint_right_ankle_y", "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}},
+        {"channel": "harmocap.slot_1_keypoint_right_ankle_y", "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}}
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {"min_valid_count": 1, "min_observed_count": 1, "max_age_ms": 250.0, "include_held": false, "held_max_ms": 0.0, "confidence": "minimum"}
+    },
+    {
+      "aggregator_id": "focused-head-y",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_head",
+      "output_channel": "y",
+      "inputs": [
+        {"channel": "harmocap.slot_0_keypoint_nose_y", "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}},
+        {"channel": "harmocap.slot_1_keypoint_nose_y", "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}}
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {"min_valid_count": 1, "min_observed_count": 1, "max_age_ms": 250.0, "include_held": false, "held_max_ms": 0.0, "confidence": "minimum"}
+    },
+    {
+      "aggregator_id": "non-focused-crowd-energy",
+      "aggregator_version": 1,
+      "derived_source_id": "crowd",
+      "output_channel": "energy",
+      "inputs": [
+        {"channel": "harmocap.slot_0_kinetic_energy", "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 0.0}},
+        {"channel": "harmocap.slot_1_kinetic_energy", "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 0.0}}
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 30.0},
+      "validity": {"min_valid_count": 1, "min_observed_count": 1, "max_age_ms": 250.0, "include_held": false, "held_max_ms": 0.0, "confidence": "minimum"}
+    }
+  ],
+  "routes": [
+    {
+      "route_id": "left-wrist-to-harmonic-1",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_left_wrist.y"}],
+      "transforms": [{"type": "scale_range", "in": [0.0, 1.0], "out": [0.0, 0.82], "clamp": true}],
+      "destination": {"instrument_id": "shaper", "capability": "harmonic_gain", "bindings": {"N": 1}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    },
+    {
+      "route_id": "right-wrist-to-harmonic-2",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_right_wrist.y"}],
+      "transforms": [{"type": "scale_range", "in": [0.0, 1.0], "out": [0.0, 0.78], "clamp": true}],
+      "destination": {"instrument_id": "shaper", "capability": "harmonic_gain", "bindings": {"N": 2}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    },
+    {
+      "route_id": "left-ankle-to-harmonic-3",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_left_ankle.y"}],
+      "transforms": [{"type": "scale_range", "in": [0.0, 1.0], "out": [0.0, 0.70], "clamp": true}],
+      "destination": {"instrument_id": "shaper", "capability": "harmonic_gain", "bindings": {"N": 3}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    },
+    {
+      "route_id": "right-ankle-to-harmonic-4",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_right_ankle.y"}],
+      "transforms": [{"type": "scale_range", "in": [0.0, 1.0], "out": [0.0, 0.66], "clamp": true}],
+      "destination": {"instrument_id": "shaper", "capability": "harmonic_gain", "bindings": {"N": 4}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    },
+    {
+      "route_id": "head-to-harmonic-5",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_head.y"}],
+      "transforms": [{"type": "scale_range", "in": [0.0, 1.0], "out": [0.0, 0.74], "clamp": true}],
+      "destination": {"instrument_id": "shaper", "capability": "harmonic_gain", "bindings": {"N": 5}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    },
+    {
+      "route_id": "crowd-to-beacon-master",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "crowd.energy"}],
+      "transforms": [{"type": "scale_range", "in": [0.0, 1.0], "out": [0.38, 0.90], "clamp": true}],
+      "destination": {"instrument_id": "beacon-spatial", "capability": "master_gain", "bindings": {}, "argument": "master_gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "hold_then_reset", "hold_ms": 250.0}
+    },
+    {
+      "route_id": "ecg-beat-to-nature-pulse",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "ecg.beat"}],
+      "transforms": [{"type": "gate", "threshold": 0.5, "hysteresis": 0.1, "mode": "rising_edge", "closed": {"value": 0.08}}],
+      "destination": {"instrument_id": "beacon-spatial", "capability": "nature_gain", "bindings": {}, "argument": "gain"},
+      "validity": {"held": "reject", "min_confidence": 0.8, "invalid": "release"}
+    }
+  ],
+  "transition": {"policy": "crossfade", "duration_ms": 300.0, "await_valid_ms": 500.0}
+}

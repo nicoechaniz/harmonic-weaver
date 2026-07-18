@@ -7,3 +7,9 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+# T4.5 rehearsal evidence: bulky binary/high-frequency artifacts stay on disk.
+rehearsal/artifacts/*/audio/
+rehearsal/artifacts/*/instrument_outputs.jsonl
+rehearsal/artifacts/*/states/
+reports/t45-*/state_timestamps.jsonl

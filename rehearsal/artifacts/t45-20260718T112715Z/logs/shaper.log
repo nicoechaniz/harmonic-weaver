@@ -1,0 +1,10 @@
+2026-07-18 08:27:25,410 | INFO    | harmonic_shaper.main | Starting Harmonic Shaper: f1=40.40 Hz, anchor_midi=24, bands=32, polyphony=32, native_midi=False
+2026-07-18 08:27:25,412 | INFO    | harmonic_shaper.osc_receiver | Native OSC on 127.0.0.1:9002 (/digital/*)
+2026-07-18 08:27:25,412 | INFO    | harmonic_shaper.osc_receiver | Optional slave OSC on 127.0.0.1:9001 (/beacon/*)
+2026-07-18 08:27:25,780 | INFO    | harmonic_shaper.main | Native OSC: 127.0.0.1:9002 /digital/*
+2026-07-18 08:27:25,780 | INFO    | harmonic_shaper.main | Planned namespace (not yet on wire): /shaper/*
+2026-07-18 08:27:25,780 | INFO    | harmonic_shaper.main | Slave OSC enabled: 127.0.0.1:9001 /beacon/*
+2026-07-18 08:27:25,780 | INFO    | harmonic_shaper.main | State API: http://127.0.0.1:8080 (WebSocket /ws)
+2026-07-18 08:27:25,780 | INFO    | harmonic_shaper.main | Shaper running; press Ctrl-C to stop
+2026-07-18 08:29:19,877 | INFO    | harmonic_shaper.main | Signal 15 received; stopping
+2026-07-18 08:29:20,299 | INFO    | harmonic_shaper.main | Harmonic Shaper stopped

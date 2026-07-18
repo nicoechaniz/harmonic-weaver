@@ -1,0 +1,1 @@
+[{"at_us":1784371484665804,"elapsed_s":0.004054,"error":"AssertionError: preflight.port.8765: loopback socket can be created and the port is available before launch","event":"rehearsal_aborted"}]

@@ -1,0 +1,1 @@
+[{"at_us":1784371708703033,"elapsed_s":0.004728,"error":"AssertionError: preflight.port.8765: loopback socket creation denied by execution environment: [Errno 1] Operation not permitted","event":"rehearsal_aborted"}]
