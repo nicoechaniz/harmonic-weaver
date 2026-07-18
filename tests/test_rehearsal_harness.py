@@ -185,6 +185,23 @@ def test_rehearsal_scenes_express_required_event_sources() -> None:
     )
 
 
+def test_harmocap_manifest_matches_producer_feature_ranges() -> None:
+    """S13 regression: HarMoCAP schema.FEATURE_RANGES declares verticality as
+    signed (-1..1); the runtime manifest must not clamp it to (0,1), or live
+    frames raise engine range-validation errors."""
+    manifest = harmocap_manifest()
+    ranges = {spec["name"]: tuple(spec["range"]) for spec in manifest["channels"]}
+    for slot in range(8):
+        assert ranges[f"slot_{slot}_verticality"] == (-1.0, 1.0)
+    # All other features stay normalized (0..1).
+    for name, bounds in ranges.items():
+        if "_keypoint_" in name or name.endswith(("_present", "_focused")):
+            continue
+        if name.endswith("_verticality"):
+            continue
+        assert bounds == (0.0, 1.0), name
+
+
 def test_audio_analyzer_reports_finite_non_silent_signal(tmp_path: Path) -> None:
     np = pytest.importorskip("numpy")
     sf = pytest.importorskip("soundfile")

@@ -108,6 +108,12 @@ def harmocap_manifest() -> dict[str, Any]:
             bounds = (0.0, 4.0)
         else:  # defensive: channel_names should be exhausted by the sets above
             bounds = (-1_000_000.0, 1_000_000.0)
+        # HarMoCAP INTERFACE_SPEC / schema.FEATURE_RANGES: verticality is a
+        # signed feature (-1..1). Live data exercises the negative range even
+        # though the two_persons fixture never did; the wrong bound made the
+        # engine raise on valid live frames (S13 live test).
+        if name.endswith("_verticality"):
+            bounds = (-1.0, 1.0)
         specs.append((name, bounds))
     return source_manifest("harmocap", specs, lease_ms=2500.0, rate_hz=60.0)
 

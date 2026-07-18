@@ -311,6 +311,7 @@ class DriverStats:
     lease_expiries: int = 0
     tombstones: int = 0
     decode_errors: int = 0
+    callback_errors: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -587,7 +588,13 @@ class HarMoCAPDriver:
     def _emit(self, now_ms: float) -> None:
         if self.on_frame is None:
             return
-        self.on_frame(self.source_id, self._build_channel_values())
+        try:
+            self.on_frame(self.source_id, self._build_channel_values())
+        except Exception:
+            # A consumer raising (e.g. engine range validation on an
+            # out-of-contract value) must never kill the UDP listener: a dead
+            # listener ends ingestion permanently with no re-hello path (S13).
+            self.stats.callback_errors += 1
 
     def _build_channel_values(self) -> dict[str, tuple[float, int, float]]:
         out: dict[str, tuple[float, int, float]] = {}

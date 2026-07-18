@@ -604,5 +604,38 @@ class TestMonotonicAcrossStreamReset(unittest.TestCase):
         self.assertEqual(col.last["slot_0_present"][0], 1.0)
 
 
+@unittest.skipUnless(TWO_PERSONS.is_file(), f"missing fixture {TWO_PERSONS}")
+class TestCallbackResilience(unittest.TestCase):
+    def test_raising_consumer_never_kills_ingestion(self) -> None:
+        """S13 regression: an on_frame consumer that raises (e.g. engine range
+        validation) must be counted, not propagated — an exception escaping
+        _emit would kill the serve_udp listener thread permanently."""
+        calls = {"n": 0}
+
+        def raising_on_frame(source_id, channel_values) -> None:
+            calls["n"] += 1
+            raise ValueError("simulated engine validation failure")
+
+        drv = HarMoCAPDriver(on_frame=raising_on_frame)
+        frames = load_jsonl(TWO_PERSONS)
+        d0 = frames[0]
+        for pkt in handshake_bytes(d0):
+            drv.handle_datagram(pkt, now_ms=100.0)
+        for pkt in frame_to_wire(d0, 1):
+            drv.handle_datagram(pkt, now_ms=110.0)  # must not raise
+
+        self.assertGreater(calls["n"], 0)
+        self.assertEqual(drv.stats.callback_errors, calls["n"])
+        # Driver state still advanced despite the failing consumer.
+        self.assertGreaterEqual(drv.last_seq, 1)
+
+        # A healthy consumer installed afterwards receives frames normally.
+        col = FrameCollector()
+        drv.on_frame = col
+        for pkt in frame_to_wire(d0, 100):
+            drv.handle_datagram(pkt, now_ms=120.0)
+        self.assertGreater(len(col.frames), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
