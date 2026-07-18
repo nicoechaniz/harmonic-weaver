@@ -1,0 +1,155 @@
+{
+  "name": "source-frame-v1-template",
+  "contract_type": "source_frame",
+  "contract_version": "1.0",
+  "schema_version": "1.0.0",
+  "namespace": "/src/example-source",
+  "template_usage": "Replace example-source, declare every emitted channel, then regenerate the contract_id golden sidecar.",
+  "transport": {
+    "protocol": "OSC 1.0 over UDP",
+    "bundle": "One atomic OSC bundle per source frame: /frame followed by exactly one message for every declared channel.",
+    "max_datagram_bytes": 1200,
+    "hello_rebroadcast_s": 1.0,
+    "heartbeat_interval_ms": 500
+  },
+  "hashes": {
+    "algorithm": "SHA-256 truncated to 128 bits, lowercase hex (32 characters)",
+    "contract_id": "Canonical UTF-8 JSON with sorted keys, no whitespace and no NaN/Infinity, excluding top-level contract_id, golden_hash and expected_contract_id fields. The expected value lives in a golden sidecar."
+  },
+  "source": {
+    "source_id": "example-source",
+    "description": "Replace with a stable identifier and a description of the physical or derived source.",
+    "destination_independence": "Channel names describe source-domain signals only and MUST NOT name or encode destination instruments or parameters."
+  },
+  "stream_identity": {
+    "stream_id": "Random 64-bit lowercase hexadecimal value generated once per process start.",
+    "scope": "frame_seq, heartbeat_seq, monotonic receiver state and the presence lease are scoped to stream_id.",
+    "restart_rule": "A new stream_id resets receiver counters and lease state; monotonic comparison never crosses streams."
+  },
+  "counters": {
+    "frame_seq": "Unsigned monotonic emission counter with no producer-side gaps; increment once per source frame.",
+    "heartbeat_seq": "Unsigned monotonic heartbeat counter; independent of frame_seq.",
+    "wire_type": "OSC int64 (h)"
+  },
+  "presence": {
+    "lease_ms": 2000,
+    "renewed_by": [
+      "a valid /hello",
+      "a valid /heartbeat",
+      "a valid /frame bundle"
+    ],
+    "expiry": "After lease_ms without a valid renewal for the active stream, mark the source absent and invalidate all of its channels."
+  },
+  "states_enum": {
+    "observed": {
+      "code": 0,
+      "meaning": "Value is directly observed or freshly computed; confidence describes current reliability."
+    },
+    "held": {
+      "code": 1,
+      "meaning": "Hold-last value; confidence MUST decay monotonically while the value remains held."
+    },
+    "invalid": {
+      "code": 2,
+      "meaning": "No usable value. The wire value is the 0.0 sentinel and receivers MUST ignore it."
+    }
+  },
+  "channels": [
+    {
+      "name": "modulation",
+      "description": "Example normalized source-domain channel; replace or remove it in a concrete contract.",
+      "range": [
+        0.0,
+        1.0
+      ],
+      "polarity": "0 = minimum observed source-domain intensity; 1 = maximum calibrated source-domain intensity.",
+      "rate_hz_nominal": 30.0,
+      "smoothing_hints": "Consumer must interpolate or smooth this control-rate signal to audio rate before sample-by-sample use."
+    }
+  ],
+  "frame": {
+    "atomicity": "The /frame metadata message and all declared channel messages share one OSC bundle and the immediately timetag.",
+    "channel_payload": [
+      "value(float32)",
+      "state(int32: states_enum code)",
+      "confidence(float32 in [0,1])"
+    ],
+    "completeness": "A frame is usable only when it contains exactly one value/state/confidence tuple for every declared channel.",
+    "invalid_rule": "state=invalid requires value=0.0 and the receiver ignores value regardless of confidence."
+  },
+  "handshake": {
+    "hello_address": "/src/example-source/hello",
+    "hello_request_address": "/src/example-source/hello/request",
+    "rebroadcast": "At process start, approximately every hello_rebroadcast_s, and whenever contract or producer metadata changes.",
+    "gating_tuple": [
+      "source_id",
+      "stream_id",
+      "contract_id"
+    ]
+  },
+  "addresses": {
+    "/src/example-source/hello": {
+      "typetags": "ssssss",
+      "args": [
+        "source_id",
+        "stream_id",
+        "schema_version",
+        "producer_version",
+        "contract_id",
+        "config_hash"
+      ],
+      "frequency": "On start, approximately 1 Hz, and on change."
+    },
+    "/src/example-source/hello/request": {
+      "typetags": "s",
+      "args": [
+        "expected_contract_id (empty string means current)"
+      ],
+      "direction": "receiver to source control port"
+    },
+    "/src/example-source/heartbeat": {
+      "typetags": "shhs",
+      "args": [
+        "stream_id",
+        "heartbeat_seq(h)",
+        "sent_at_us(h)",
+        "contract_id"
+      ],
+      "frequency": "At least once per heartbeat_interval_ms while no frames are emitted."
+    },
+    "/src/example-source/frame": {
+      "typetags": "shhs",
+      "args": [
+        "stream_id",
+        "frame_seq(h)",
+        "captured_at_us(h)",
+        "contract_id"
+      ],
+      "frequency": "Once per atomic source frame bundle."
+    },
+    "/src/example-source/{channel}": {
+      "typetags": "fif",
+      "args": [
+        "value",
+        "state",
+        "confidence"
+      ],
+      "constraint": "channel is one of channels[].name; one message per declared channel in every frame bundle."
+    }
+  },
+  "producer_rules": {
+    "normalized_values": "Every channel value is a finite float in its declared range unless state=invalid, when the 0.0 sentinel is sent and ignored.",
+    "channel_names": "Names MUST match [a-z][a-z0-9_-]* and remain source-domain concepts.",
+    "destination_names": "A source contract MUST NOT contain destination instrument names in channel names or source OSC addresses.",
+    "state_required": "Every emitted channel message carries one of observed, held or invalid."
+  },
+  "receiver_rules": {
+    "gating": "Do not release frames until /hello contract_id exactly matches the locally accepted contract_id. Unknown or stale contracts are rejected and /hello/request may be sent.",
+    "monotonic_discard": "Within one stream_id, discard any frame with frame_seq less than or equal to the last applied frame_seq.",
+    "stream_change": "On a new stream_id, discard cached values, reset counters and begin a new presence lease.",
+    "lease_expiry": "After presence.lease_ms without a valid renewal, treat the source as absent and all channels as invalid.",
+    "held": "A held value may be routed only with its decaying confidence; the receiver MUST NOT promote it to observed.",
+    "invalid": "Ignore the value when state=invalid, even when it is numerically inside the declared range.",
+    "interpolation": "Apply each channel's smoothing_hints; control-rate values used by an audio engine must be interpolated to audio rate."
+  }
+}

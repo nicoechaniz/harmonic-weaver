@@ -1,0 +1,160 @@
+{
+  "name": "instrument-control-v1-template",
+  "contract_type": "instrument_control",
+  "contract_version": "1.0",
+  "schema_version": "1.0.0",
+  "namespace": "/instrument",
+  "template_usage": "Replace /instrument with the instrument's existing native namespace, declare its real capabilities, choose a state synchronization mode, then regenerate the contract_id golden sidecar.",
+  "transport": {
+    "protocol": "OSC 1.0 over UDP",
+    "max_datagram_bytes": 1200,
+    "hello_rebroadcast_s": 1.0
+  },
+  "hashes": {
+    "algorithm": "SHA-256 truncated to 128 bits, lowercase hex (32 characters)",
+    "contract_id": "Canonical UTF-8 JSON with sorted keys, no whitespace and no NaN/Infinity, excluding top-level contract_id, golden_hash and expected_contract_id fields. The expected value lives in a golden sidecar."
+  },
+  "instrument": {
+    "instrument_id": "example-instrument",
+    "description": "Replace with the instrument's stable identity and musical role.",
+    "native_namespace_rule": "The existing native namespace is authoritative. Do not flatten capabilities into a mandatory common voice protocol."
+  },
+  "stream_identity": {
+    "stream_id": "Random 64-bit lowercase hexadecimal value generated once per instrument process start.",
+    "scope": "state_seq and monotonic client state are scoped to stream_id.",
+    "restart_rule": "A new stream_id invalidates cached state and requires a fresh state synchronization."
+  },
+  "counters": {
+    "state_seq": "Unsigned monotonic OSC int64 (h), incremented for every state change or state snapshot emitted by the instrument."
+  },
+  "handshake": {
+    "hello_address": "/instrument/hello",
+    "hello_request_address": "/instrument/hello/request",
+    "hello_args": [
+      "instrument_id",
+      "stream_id",
+      "schema_version",
+      "producer_version",
+      "contract_id",
+      "state_seq(h)"
+    ],
+    "rebroadcast": "At process start, approximately every hello_rebroadcast_s, and whenever contract or producer metadata changes."
+  },
+  "capabilities": [
+    {
+      "name": "voice_gain",
+      "address_pattern": "/instrument/gain/{N}",
+      "parameters": {
+        "N": {
+          "type": "int32",
+          "bounds": [
+            0,
+            31
+          ]
+        }
+      },
+      "arguments": [
+        {
+          "name": "gain",
+          "type": "float32",
+          "range": [
+            0.0,
+            1.0
+          ],
+          "polarity": "0 = silent; 1 = instrument-defined maximum gain."
+        }
+      ],
+      "lag_ms": 20.0,
+      "smoothing": "Linear ramp inside the instrument; clients may request steps no faster than the declared lag can settle.",
+      "read": true,
+      "write": true
+    },
+    {
+      "name": "voice_pan",
+      "address_pattern": "/instrument/pan/{N}",
+      "parameters": {
+        "N": {
+          "type": "int32",
+          "bounds": [
+            0,
+            31
+          ]
+        }
+      },
+      "arguments": [
+        {
+          "name": "pan",
+          "type": "float32",
+          "range": [
+            -1.0,
+            1.0
+          ],
+          "polarity": "-1 = left; 0 = center; 1 = right."
+        }
+      ],
+      "lag_ms": 20.0,
+      "smoothing": "Linear ramp inside the instrument.",
+      "read": true,
+      "write": true
+    },
+    {
+      "name": "voice_phase",
+      "address_pattern": "/instrument/phase/{N}",
+      "parameters": {
+        "N": {
+          "type": "int32",
+          "bounds": [
+            0,
+            31
+          ]
+        }
+      },
+      "arguments": [
+        {
+          "name": "phase_degrees",
+          "type": "float32",
+          "range": [
+            0.0,
+            360.0
+          ],
+          "polarity": "Increasing values advance phase in degrees; 360 wraps to 0."
+        }
+      ],
+      "lag_ms": 20.0,
+      "smoothing": "Shortest-path circular interpolation inside the instrument.",
+      "read": true,
+      "write": true
+    }
+  ],
+  "state_sync": {
+    "mode": "dump",
+    "request_address": "/instrument/state",
+    "request_args": [
+      "expected_contract_id"
+    ],
+    "response": "One atomic bundle beginning with /instrument/state/begin(stream_id, state_seq, contract_id), followed by current readable capability values at their native addresses, and ending with /instrument/state/end(stream_id, state_seq).",
+    "periodic_broadcast": false,
+    "connect_rule": "After a matching /hello, a client MUST complete a state dump before presenting or modifying instrument state."
+  },
+  "receiver_rules": {
+    "client_gating": "A client MUST NOT send capability writes until /hello contract_id exactly matches the locally accepted contract_id and state synchronization completes.",
+    "stale_contract": "On a missing or mismatched contract_id, stop writes, discard state messages, mark the instrument incompatible and request /hello again.",
+    "instrument_gating": "When a transport adapter can identify negotiated clients, the instrument MUST ignore writes from clients that did not complete a matching handshake.",
+    "monotonic_discard": "Within one stream_id, discard state updates with state_seq less than or equal to the last applied state_seq, except members of the same atomic state dump.",
+    "stream_change": "A new stream_id clears cached state and requires a fresh dump or periodic-broadcast synchronization."
+  },
+  "voice_model_alias": {
+    "enabled": false,
+    "status": "Optional adapter metadata; it is not the instrument's native contract and may be omitted entirely.",
+    "voice_parameter": "N",
+    "voice_bounds": [
+      0,
+      31
+    ],
+    "mapping": {
+      "gain": "/instrument/gain/{N}",
+      "pan": "/instrument/pan/{N}",
+      "phase": "/instrument/phase/{N}"
+    }
+  }
+}
