@@ -187,6 +187,8 @@ class RouteRuntime:
     smooth_values: dict[int, float] = field(default_factory=dict)
     smooth_at_us: dict[int, int] = field(default_factory=dict)
     gate_states: dict[int, bool] = field(default_factory=dict)
+    phase_values: dict[int, float] = field(default_factory=dict)
+    phase_at_us: dict[int, int] = field(default_factory=dict)
     last_usable_output: float | None = None
     last_usable_at_us: int | None = None
     invalid_reset_sent: bool = False
@@ -406,7 +408,7 @@ def compile_route(
         if not isinstance(transform, Mapping):
             raise validation(f"{tpath} must be an object")
         kind = transform.get("type")
-        if kind not in {"scale_range", "curve", "smoothing", "gate", "combine"}:
+        if kind not in {"scale_range", "curve", "smoothing", "gate", "combine", "phase_accumulator"}:
             raise validation(f"{tpath}.type is invalid")
         if kind == "combine":
             if index != 0 or len(inputs) == 1:
@@ -447,6 +449,16 @@ def compile_route(
                 current_range = min(current_range[0], closed_value), max(current_range[1], closed_value)
             if mode in {"rising_edge", "falling_edge"}:
                 current_range = (0.0, 1.0) if closed == "suppress" else (min(1.0, closed_value), max(1.0, closed_value))
+        elif kind == "phase_accumulator":
+            # Integrator: input is an angular velocity (deg/s), output is the
+            # running phase wrapped to [0, wrap_deg). Output range is bounded by
+            # the modulus regardless of the incoming velocity range.
+            wrap_deg = positive(transform.get("wrap_deg", 360.0), f"{tpath}.wrap_deg")
+            if "max_rate" in transform:
+                positive(transform["max_rate"], f"{tpath}.max_rate")
+            if "max_dt_ms" in transform:
+                nonnegative(transform["max_dt_ms"], f"{tpath}.max_dt_ms")
+            current_range = (0.0, wrap_deg)
     validity_policy = validate_validity(raw["validity"], f"{path}.validity")
     definition = copy.deepcopy(dict(raw))
     definition["validity"] = validity_policy
@@ -553,6 +565,31 @@ def evaluate_route(
                 if closed == "suppress":
                     return None, "suppress"
                 current = float(closed["value"])
+        elif kind == "phase_accumulator":
+            assert isinstance(current, float)
+            wrap_deg = float(transform.get("wrap_deg", 360.0))
+            velocity = current
+            max_rate = transform.get("max_rate")
+            if max_rate is not None:
+                limit = abs(float(max_rate))
+                velocity = min(max(velocity, -limit), limit)
+            previous_phase = runtime.phase_values.get(transform_index, 0.0)
+            previous_at_us = runtime.phase_at_us.get(transform_index)
+            if previous_at_us is None:
+                # First evaluation for this transform: establish the epoch, do
+                # not integrate an undefined dt.
+                phase = previous_phase % wrap_deg
+            else:
+                dt_s = max(0.0, (now_us - previous_at_us) / 1_000_000.0)
+                # Clamp dt so a gap (route unusable, then usable again) cannot
+                # produce a large phase jump on resume.
+                max_dt_s = float(transform.get("max_dt_ms", 100.0)) / 1000.0
+                if dt_s > max_dt_s:
+                    dt_s = max_dt_s
+                phase = (previous_phase + velocity * dt_s) % wrap_deg
+            runtime.phase_values[transform_index] = phase
+            runtime.phase_at_us[transform_index] = now_us
+            current = phase
     if isinstance(current, list) or not math.isfinite(current):
         return None, "suppress"
     runtime.last_usable_output = current

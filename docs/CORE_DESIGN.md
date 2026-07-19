@@ -96,6 +96,13 @@ Transform execution is ordered and uses finite numbers only:
 | `smoothing` | One-pole or bounded ramp with declared `time_ms`; it is control-rate smoothing, not audio interpolation. |
 | `gate` | Threshold, hysteresis, `level`/`rising_edge`/`falling_edge`, and closed behavior (`suppress` or a finite value). |
 | `combine` | `mean`, `sum`, `min`, `max`, `weighted_sum` or `difference`, with arity and weights validated. |
+| `phase_accumulator` | Integrate an angular velocity (deg/s) into a running phase wrapped to `[0, wrap_deg)` (default `360`). Optional `max_rate` clamps `|velocity|`; `max_dt_ms` (default `100`) clamps the per-evaluation step so a gap on resume cannot jump. Stateful. |
+
+`scale_range`, `curve`, `combine` and `gate` are memoryless; `smoothing` and
+`phase_accumulator` are **stateful** — they hold per-route, per-position state in
+`RouteRuntime` and derive their time step from the engine's `now_us` deltas (the
+same monotonic clock used everywhere, so replay/resume stays deterministic — never
+wall-clock). See `docs/TRANSFORM_PHASE_ACCUMULATOR.md`.
 
 Every route declares a validity policy. `invalid` never enters the numerical
 chain. `held` may be accepted or rejected, but its state and decaying confidence
