@@ -48,6 +48,9 @@
 #   --no-record                  Do not record the HarMoCAP session
 #   --show                       Open the HarMoCAP cv2 skeleton window
 #   --shaper-no-audio            Run the shaper headless (no sounddevice)
+#   --shaper-no-midi             Disable shaper MIDI inputs (default: MIDI
+#                                enabled, so USB keyboards like the reface
+#                                CP drive the native harmonic source)
 #   --with-ecg-sim               Also launch the deterministic ECG simulator
 #   --ecg-bpm <bpm>              ECG simulator rate (default: 72)
 #   --no-beacon                  Skip beacon-spatial (assume already running)
@@ -91,6 +94,7 @@ RECORD=""
 RECORD_SET=0
 SHOW=0
 SHAPER_AUDIO=1
+SHAPER_MIDI=1
 ECG_SIM=0
 ECG_BPM="72"
 DO_BEACON=1
@@ -114,6 +118,7 @@ while [ "$#" -gt 0 ]; do
         --no-record)     RECORD=""; RECORD_SET=1 ;;
         --show)          SHOW=1 ;;
         --shaper-no-audio) SHAPER_AUDIO=0 ;;
+        --shaper-no-midi) SHAPER_MIDI=0 ;;
         --with-ecg-sim)  ECG_SIM=1 ;;
         --ecg-bpm)       ECG_BPM="${2:?--ecg-bpm needs a value}"; shift ;;
         --no-beacon)     DO_BEACON=0 ;;
@@ -309,9 +314,10 @@ fi
 
 # ---- 2. harmonic-shaper -------------------------------------------------------
 if [ "$DO_SHAPER" -eq 1 ]; then
-    SHAPER_ARGS=(--no-midi)
+    SHAPER_ARGS=()
     [ "$SHAPER_AUDIO" -eq 0 ] && SHAPER_ARGS+=(--no-audio)
-    log "starting harmonic-shaper ${SHAPER_ARGS[*]}"
+    [ "$SHAPER_MIDI" -eq 0 ] && SHAPER_ARGS+=(--no-midi)
+    log "starting harmonic-shaper ${SHAPER_ARGS[*]:-(audio+midi)}"
     (cd "$SHAPER_DIR" && "$SHAPER_VENV/bin/python" -m harmonic_shaper "${SHAPER_ARGS[@]}") \
         > "$LOG_DIR/shaper.log" 2>&1 &
     register $! shaper
