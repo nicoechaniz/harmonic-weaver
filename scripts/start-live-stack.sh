@@ -24,6 +24,10 @@
 # Options:
 #   --beacon-source <file|live>  Beacon audio source: session WAV or the
 #                                R24 live input (default: file)
+#   --beacon-mute                Keep the beacon engine running (OSC,
+#                                state dumps, crowd routes all live) but
+#                                disconnect scsynth from the audio outputs,
+#                                so only the shaper is audible
 #   --camera <source>            HarMoCAP camera index or video path
 #                                (default: 0)
 #   --harmocap-device <auto|cpu|cuda>
@@ -84,6 +88,7 @@ HARMOCAP_VENV="${HARMOCAP_VENV:-$HARMOCAP_DIR/.venv}"
 
 # ---- defaults -------------------------------------------------------------
 BEACON_SOURCE="file"
+BEACON_MUTE=0
 CAMERA="0"
 HARMOCAP_DEVICE="auto"
 SCENE="event-demo"
@@ -108,6 +113,7 @@ usage() { sed -n '2,80p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --beacon-source) BEACON_SOURCE="${2:?--beacon-source needs file|live}"; shift ;;
+        --beacon-mute)   BEACON_MUTE=1 ;;
         --camera)        CAMERA="${2:?--camera needs a source}"; shift ;;
         --harmocap-device) HARMOCAP_DEVICE="${2:?--harmocap-device needs auto|cpu|cuda}"; shift ;;
         --scene)         SCENE="${2:?--scene needs a name}"; shift ;;
@@ -310,6 +316,24 @@ if [ "$DO_BEACON" -eq 1 ]; then
     register $! beacon
     wait_beacon_osc 90
     log "beacon ready (OSC hello + state dump OK)"
+    if [ "$BEACON_MUTE" -eq 1 ]; then
+        # Keep the engine alive (OSC, state dumps, crowd routes) but silent:
+        # drop every link from the scsynth JACK outputs. pw-link -d needs
+        # explicit output+input pairs (a bare port fails with "No such file
+        # or directory"), so enumerate the links first.
+        for _ in $(seq 1 30); do
+            pw-link -o 2>/dev/null | grep -q '^SuperCollider:out_1$' && break
+            sleep 1
+        done
+        pw-link -l 2>/dev/null | awk '/^[^ |]/ {out=($1 ~ /^SuperCollider:out/) ? $1 : ""} /\|->/ && out {print out, $2}' \
+            | while read -r o i; do pw-link -d "$o" "$i"; done
+        sleep 2
+        if pw-link -l 2>/dev/null | awk '/^SuperCollider:out/ {found=1} found && /\|->/ {print; found=0}' | grep -q .; then
+            log "WARNING: beacon mute requested but scsynth is still linked"
+        else
+            log "beacon MUTED (scsynth outputs disconnected; engine and routes still live)"
+        fi
+    fi
 fi
 
 # ---- 2. harmonic-shaper -------------------------------------------------------
