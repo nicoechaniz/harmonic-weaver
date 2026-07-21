@@ -1,0 +1,555 @@
+{
+  "scene_id": "instrumento-v1-mvp",
+  "scene_version": 1,
+  "name": "Cuerpo como instrumento v1 MVP",
+  "description": "Head→partial_ceiling, focused right hand→arp (rate/direction/density), tempo_conf-gated tempo_bpm→clock_bpm. Convergence via slew_limiter; arp direction from derivative(wrist_y). Static arp/clock setup via constant routes.",
+  "tags": ["instrumento", "convergente", "mvp", "shaper-only", "rehearsal"],
+  "created_at_us": 0,
+  "updated_at_us": 0,
+  "aggregators": [
+    {
+      "aggregator_id": "focused-nose-y",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_head",
+      "output_channel": "nose_y",
+      "inputs": [
+        {
+          "channel": "harmocap.slot_0_keypoint_nose_y",
+          "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}
+        },
+        {
+          "channel": "harmocap.slot_1_keypoint_nose_y",
+          "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}
+        }
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {
+        "min_valid_count": 1,
+        "min_observed_count": 1,
+        "max_age_ms": 250.0,
+        "include_held": false,
+        "held_max_ms": 0.0,
+        "confidence": "minimum"
+      }
+    },
+    {
+      "aggregator_id": "focused-right-wrist-y",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_right_wrist",
+      "output_channel": "y",
+      "inputs": [
+        {
+          "channel": "harmocap.slot_0_keypoint_right_wrist_y",
+          "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}
+        },
+        {
+          "channel": "harmocap.slot_1_keypoint_right_wrist_y",
+          "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}
+        }
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {
+        "min_valid_count": 1,
+        "min_observed_count": 1,
+        "max_age_ms": 250.0,
+        "include_held": false,
+        "held_max_ms": 0.0,
+        "confidence": "minimum"
+      }
+    },
+    {
+      "aggregator_id": "focused-vel-hand-r",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_hand_r",
+      "output_channel": "vel",
+      "inputs": [
+        {
+          "channel": "harmocap.slot_0_vel_hand_r",
+          "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}
+        },
+        {
+          "channel": "harmocap.slot_1_vel_hand_r",
+          "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}
+        }
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {
+        "min_valid_count": 1,
+        "min_observed_count": 1,
+        "max_age_ms": 250.0,
+        "include_held": false,
+        "held_max_ms": 0.0,
+        "confidence": "minimum"
+      }
+    },
+    {
+      "aggregator_id": "focused-laban-time",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_effort",
+      "output_channel": "laban_time",
+      "inputs": [
+        {
+          "channel": "harmocap.slot_0_laban_time_proxy",
+          "include_when": {"channel": "harmocap.slot_0_focused", "op": "eq", "value": 1.0}
+        },
+        {
+          "channel": "harmocap.slot_1_laban_time_proxy",
+          "include_when": {"channel": "harmocap.slot_1_focused", "op": "eq", "value": 1.0}
+        }
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 60.0},
+      "validity": {
+        "min_valid_count": 1,
+        "min_observed_count": 1,
+        "max_age_ms": 250.0,
+        "include_held": false,
+        "held_max_ms": 0.0,
+        "confidence": "minimum"
+      }
+    },
+    {
+      "aggregator_id": "focused-tempo-bpm-gated",
+      "aggregator_version": 1,
+      "derived_source_id": "focused_tempo_gated",
+      "output_channel": "bpm",
+      "inputs": [
+        {
+          "channel": "harmocap.slot_0_tempo_bpm",
+          "include_when": {"channel": "harmocap.slot_0_tempo_conf", "op": "gte", "value": 0.35}
+        },
+        {
+          "channel": "harmocap.slot_1_tempo_bpm",
+          "include_when": {"channel": "harmocap.slot_1_tempo_conf", "op": "gte", "value": 0.35}
+        }
+      ],
+      "operator": "mean",
+      "cadence": {"mode": "on_input", "max_rate_hz": 30.0},
+      "validity": {
+        "min_valid_count": 1,
+        "min_observed_count": 1,
+        "max_age_ms": 500.0,
+        "include_held": false,
+        "held_max_ms": 0.0,
+        "confidence": "minimum"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "route_id": "head-to-partial-ceiling",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_head.nose_y"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [0.15, 0.85],
+          "out": [1.0, 0.0],
+          "clamp": true
+        },
+        {
+          "type": "curve",
+          "kind": "smoothstep"
+        },
+        {
+          "type": "slew_limiter",
+          "max_rate": 24.0,
+          "max_dt_ms": 80.0
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "partial_ceiling",
+        "bindings": {},
+        "argument": "level"
+      },
+      "validity": {
+        "held": "reject",
+        "min_confidence": 0.5,
+        "invalid": "hold_then_reset",
+        "hold_ms": 200.0
+      }
+    },
+    {
+      "route_id": "vel-hand-r-to-arp0-rate",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_hand_r.vel"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [0.0, 0.85],
+          "out": [0.0, 1.0],
+          "clamp": true
+        },
+        {
+          "type": "curve",
+          "kind": "power",
+          "gamma": 1.4
+        },
+        {
+          "type": "scale_range",
+          "in": [0.0, 1.0],
+          "out": [0.0, 6.0],
+          "clamp": true
+        },
+        {
+          "type": "slew_limiter",
+          "max_rate": 6.0,
+          "max_dt_ms": 80.0
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "arp_rate",
+        "bindings": {"H": 0},
+        "argument": "steps_per_beat"
+      },
+      "validity": {
+        "held": "reject",
+        "min_confidence": 0.5,
+        "invalid": "release"
+      }
+    },
+    {
+      "route_id": "wrist-y-to-arp0-direction",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_right_wrist.y"}],
+      "transforms": [
+        {
+          "type": "derivative",
+          "window_ms": 60.0,
+          "max_abs": 2.5,
+          "max_dt_ms": 100.0
+        },
+        {
+          "type": "scale_range",
+          "in": [-1.5, 1.5],
+          "out": [1.0, -1.0],
+          "clamp": true
+        },
+        {
+          "type": "slew_limiter",
+          "max_rate": 4.0,
+          "max_dt_ms": 80.0
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "arp_direction",
+        "bindings": {"H": 0},
+        "argument": "dir"
+      },
+      "validity": {
+        "held": "reject",
+        "min_confidence": 0.5,
+        "invalid": "hold_then_reset",
+        "hold_ms": 150.0
+      }
+    },
+    {
+      "route_id": "laban-time-to-arp0-density",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_effort.laban_time"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [0.0, 1.0],
+          "out": [0.0, 1.0],
+          "clamp": true
+        },
+        {
+          "type": "curve",
+          "kind": "power",
+          "gamma": 1.2
+        },
+        {
+          "type": "slew_limiter",
+          "max_rate": 2.0,
+          "max_dt_ms": 80.0
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "arp_density",
+        "bindings": {"H": 0},
+        "argument": "fill"
+      },
+      "validity": {
+        "held": "reject",
+        "min_confidence": 0.5,
+        "invalid": "release"
+      }
+    },
+    {
+      "route_id": "tempo-to-clock-bpm",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_tempo_gated.bpm"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [40.0, 180.0],
+          "out": [40.0, 180.0],
+          "clamp": true
+        },
+        {
+          "type": "slew_limiter",
+          "max_rate": 40.0,
+          "max_dt_ms": 100.0
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "clock_bpm",
+        "bindings": {},
+        "argument": "bpm"
+      },
+      "validity": {
+        "held": "reject",
+        "min_confidence": 0.0,
+        "invalid": "hold_then_reset",
+        "hold_ms": 800.0
+      }
+    },
+    {
+      "route_id": "static-generator-enable",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_hand_r.vel"}],
+      "transforms": [
+        {
+          "type": "gate",
+          "threshold": -1.0,
+          "hysteresis": 0.0,
+          "mode": "rising_edge",
+          "closed": {"value": 1.0}
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "generator_enable",
+        "bindings": {},
+        "argument": "enable"
+      },
+      "validity": {
+        "held": "accept",
+        "min_confidence": 0.0,
+        "invalid": "hold_then_reset",
+        "hold_ms": 5000.0
+      }
+    },
+    {
+      "route_id": "static-settle-beats",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_hand_r.vel"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [0.0, 1.0],
+          "out": [1.0, 1.001],
+          "clamp": true
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "settle_beats",
+        "bindings": {},
+        "argument": "beats"
+      },
+      "validity": {
+        "held": "accept",
+        "min_confidence": 0.0,
+        "invalid": "hold_then_reset",
+        "hold_ms": 5000.0
+      }
+    },
+    {
+      "route_id": "static-arp0-enable",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_hand_r.vel"}],
+      "transforms": [
+        {
+          "type": "gate",
+          "threshold": -1.0,
+          "hysteresis": 0.0,
+          "mode": "rising_edge",
+          "closed": {"value": 1.0}
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "arp_enable",
+        "bindings": {"H": 0},
+        "argument": "enable"
+      },
+      "validity": {
+        "held": "accept",
+        "min_confidence": 0.0,
+        "invalid": "release"
+      }
+    },
+    {
+      "route_id": "static-arp0-register-lo",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_hand_r.vel"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [0.0, 1.0],
+          "out": [1.0, 1.001],
+          "clamp": true
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "arp_register_lo",
+        "bindings": {"H": 0},
+        "argument": "n"
+      },
+      "validity": {
+        "held": "accept",
+        "min_confidence": 0.0,
+        "invalid": "hold_then_reset",
+        "hold_ms": 5000.0
+      }
+    },
+    {
+      "route_id": "static-arp0-register-hi",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_hand_r.vel"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [0.0, 1.0],
+          "out": [16.0, 16.001],
+          "clamp": true
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "arp_register_hi",
+        "bindings": {"H": 0},
+        "argument": "n"
+      },
+      "validity": {
+        "held": "accept",
+        "min_confidence": 0.0,
+        "invalid": "hold_then_reset",
+        "hold_ms": 5000.0
+      }
+    },
+    {
+      "route_id": "static-arp0-gate",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_hand_r.vel"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [0.0, 1.0],
+          "out": [0.55, 0.551],
+          "clamp": true
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "arp_gate",
+        "bindings": {"H": 0},
+        "argument": "frac"
+      },
+      "validity": {
+        "held": "accept",
+        "min_confidence": 0.0,
+        "invalid": "hold_then_reset",
+        "hold_ms": 5000.0
+      }
+    },
+    {
+      "route_id": "static-arp0-gain",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [{"channel": "focused_hand_r.vel"}],
+      "transforms": [
+        {
+          "type": "scale_range",
+          "in": [0.0, 1.0],
+          "out": [0.72, 0.721],
+          "clamp": true
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "arp_gain",
+        "bindings": {"H": 0},
+        "argument": "g"
+      },
+      "validity": {
+        "held": "accept",
+        "min_confidence": 0.0,
+        "invalid": "release"
+      }
+    }
+  ],
+  "transition": {
+    "policy": "reset",
+    "destination_overrides": [
+      {
+        "destination": {
+          "instrument_id": "shaper",
+          "capability": "partial_ceiling",
+          "bindings": {},
+          "argument": "level"
+        },
+        "transition": {"policy": "crossfade", "duration_ms": 200.0, "await_valid_ms": 0.0}
+      },
+      {
+        "destination": {
+          "instrument_id": "shaper",
+          "capability": "arp_rate",
+          "bindings": {"H": 0},
+          "argument": "steps_per_beat"
+        },
+        "transition": {"policy": "crossfade", "duration_ms": 200.0, "await_valid_ms": 0.0}
+      },
+      {
+        "destination": {
+          "instrument_id": "shaper",
+          "capability": "arp_direction",
+          "bindings": {"H": 0},
+          "argument": "dir"
+        },
+        "transition": {"policy": "crossfade", "duration_ms": 150.0, "await_valid_ms": 0.0}
+      },
+      {
+        "destination": {
+          "instrument_id": "shaper",
+          "capability": "arp_density",
+          "bindings": {"H": 0},
+          "argument": "fill"
+        },
+        "transition": {"policy": "crossfade", "duration_ms": 200.0, "await_valid_ms": 0.0}
+      },
+      {
+        "destination": {
+          "instrument_id": "shaper",
+          "capability": "clock_bpm",
+          "bindings": {},
+          "argument": "bpm"
+        },
+        "transition": {"policy": "crossfade", "duration_ms": 400.0, "await_valid_ms": 0.0}
+      }
+    ]
+  }
+}
+

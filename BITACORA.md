@@ -1,5 +1,6 @@
 # Bitácora — harmonic-weaver
 
+- 2026-07-21: add `instrumento_v1_mvp` scene (head→`partial_ceiling`, vel_hand→`arp_rate`, derivative(wrist_y)→`arp_direction`, laban_time→`arp_density`, tempo_conf-gated tempo→`clock_bpm`) + offline `--scene`/`--replay` path in `weaver_runtime.py`. Safety profile covers new Shaper caps; `tempo_bpm` range 0..240. E2E: two_persons + live-mutetest jsonl → arp entries, 0 transport errors. 95 tests + 4 subtests. Branch `main`.
 - 2026-07-21: add `derivative` transform (causal trailing difference → signed velocity; `window_ms`/`max_abs`/`max_dt_ms`; first sample emits 0; output `[-max_abs,+max_abs]`). Direction primitive for arp from `wrist_y` (HarMoCAP `vel_hand_*` is magnitude-only). Tests in `tests/test_transforms_derivative.py`; CORE_DESIGN updated. Branch `main`.
 - 2026-07-21: add `slew_limiter` transform (rate-limited chase of a continuous target; `max_rate` + `max_dt_ms` gap clamp; cold-start snaps to target). Core convergence primitive for cuerpo-como-instrumento. 8 tests in `tests/test_transforms_slew.py`; CORE_DESIGN updated. Branch `main`.
 - 2026-07-18: repo scaffolded.

@@ -114,6 +114,9 @@ def harmocap_manifest(lease_ms: float = 2500.0) -> dict[str, Any]:
         # engine raise on valid live frames (S13 live test).
         if name.endswith("_verticality"):
             bounds = (-1.0, 1.0)
+        # tempo_bpm is producer BPM, not unit-normalized (schema 0..240).
+        if name.endswith("_tempo_bpm"):
+            bounds = (0.0, 240.0)
         specs.append((name, bounds))
     return source_manifest("harmocap", specs, lease_ms=lease_ms, rate_hz=60.0)
 
@@ -141,6 +144,103 @@ def midi_manifest(lease_ms: float = 2500.0) -> dict[str, Any]:
 
 
 def shaper_safety_profile(contract_id: str) -> dict[str, Any]:
+    """Safety defaults for every Shaper destination a rehearsal scene may target.
+
+    Includes legacy harmonic envelopes (event_demo / sparse) plus the cuerpo-
+    instrumento MVP surface: partial_ceiling, clock, settle, generator, arp/*.
+    Every route destination must appear here or scene compile raises
+    unsafe_instrument.
+    """
+    reset_defaults: list[dict[str, Any]] = [
+        {
+            "capability": "harmonic_envelope",
+            "bindings": {"N": harmonic},
+            "argument": "gain",
+            "value": 0.0,
+        }
+        for harmonic in range(1, 6)
+    ]
+    reset_defaults.extend(
+        [
+            {
+                "capability": "partial_ceiling",
+                "bindings": {},
+                "argument": "level",
+                "value": 1.0,
+            },
+            {
+                "capability": "clock_bpm",
+                "bindings": {},
+                "argument": "bpm",
+                "value": 120.0,
+            },
+            {
+                "capability": "settle_beats",
+                "bindings": {},
+                "argument": "beats",
+                "value": 1.0,
+            },
+            {
+                "capability": "generator_enable",
+                "bindings": {},
+                "argument": "enable",
+                "value": 0,
+            },
+        ]
+    )
+    for hand in range(0, 2):
+        reset_defaults.extend(
+            [
+                {
+                    "capability": "arp_enable",
+                    "bindings": {"H": hand},
+                    "argument": "enable",
+                    "value": 0,
+                },
+                {
+                    "capability": "arp_rate",
+                    "bindings": {"H": hand},
+                    "argument": "steps_per_beat",
+                    "value": 0.0,
+                },
+                {
+                    "capability": "arp_direction",
+                    "bindings": {"H": hand},
+                    "argument": "dir",
+                    "value": 1.0,
+                },
+                {
+                    "capability": "arp_density",
+                    "bindings": {"H": hand},
+                    "argument": "fill",
+                    "value": 0.0,
+                },
+                {
+                    "capability": "arp_register_lo",
+                    "bindings": {"H": hand},
+                    "argument": "n",
+                    "value": 1.0,
+                },
+                {
+                    "capability": "arp_register_hi",
+                    "bindings": {"H": hand},
+                    "argument": "n",
+                    "value": 16.0,
+                },
+                {
+                    "capability": "arp_gate",
+                    "bindings": {"H": hand},
+                    "argument": "frac",
+                    "value": 0.5,
+                },
+                {
+                    "capability": "arp_gain",
+                    "bindings": {"H": hand},
+                    "argument": "g",
+                    "value": 0.0,
+                },
+            ]
+        )
     return {
         "instrument_id": "shaper",
         "instrument_contract_id": contract_id,
@@ -154,15 +254,7 @@ def shaper_safety_profile(contract_id: str) -> dict[str, Any]:
                 "ramp_ms": 0.0,
             }
         ],
-        "reset_defaults": [
-            {
-                "capability": "harmonic_envelope",
-                "bindings": {"N": harmonic},
-                "argument": "gain",
-                "value": 0.0,
-            }
-            for harmonic in range(1, 6)
-        ],
+        "reset_defaults": reset_defaults,
         "rearm_fade_ms": 300.0,
     }
 
@@ -216,15 +308,168 @@ def _stream_id() -> str:
     return secrets.token_hex(8)
 
 
+def _default_sibling(name: str) -> Path:
+    return REPO_ROOT.parent / name
+
+
+def resolve_scene_path(scene: str | Path) -> Path:
+    """Resolve a scene name or path under rehearsal/scenes/."""
+    candidate = Path(scene)
+    if candidate.is_file():
+        return candidate
+    name = str(scene)
+    if name.endswith(".scene.json"):
+        path = REPO_ROOT / "rehearsal" / "scenes" / name
+    else:
+        path = REPO_ROOT / "rehearsal" / "scenes" / f"{name}.scene.json"
+    if not path.is_file():
+        raise FileNotFoundError(f"scene not found: {scene} (looked for {path})")
+    return path
+
+
+def _pad_person_features(person: dict[str, Any], target_n: int = 24) -> dict[str, Any]:
+    """Pad pre-tempo (21-feature) session persons so kit pack expects 24."""
+    out = dict(person)
+    features = list(out.get("features") or [])
+    feat_state = list(out.get("feat_state") or [])
+    if len(features) < target_n:
+        features = features + [0.0] * (target_n - len(features))
+    if len(feat_state) < target_n:
+        # STATE_INVALID = 2 for unknown tempo fields on older sessions.
+        feat_state = feat_state + [2] * (target_n - len(feat_state))
+    out["features"] = features[:target_n]
+    out["feat_state"] = feat_state[:target_n]
+    return out
+
+
+def _load_kit_codec():
+    """Import HarMoCAP kit osc_codec for session→wire encoding (offline only)."""
+    import importlib.util
+
+    kit_codec = (
+        REPO_ROOT.parent
+        / "HarMoCAP"
+        / "harmocap-nico-kit"
+        / "osc_codec.py"
+    )
+    if not kit_codec.is_file():
+        raise FileNotFoundError(
+            f"HarMoCAP kit osc_codec not found at {kit_codec}; needed for --replay"
+        )
+    spec = importlib.util.spec_from_file_location("harmocap_kit_osc_codec", kit_codec)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _handshake_bytes(codec: Any, frame: Mapping[str, Any]) -> list[bytes]:
+    params = frame.get("calibration_params")
+    params_blob = b""
+    calib_hash = "0" * 32
+    if params:
+        order = [
+            "torso_height_norm",
+            "vmax_hand",
+            "vmax_center",
+            "jerk_ref",
+            "energy_ref",
+            "accel_ref",
+        ]
+        params_blob = codec.pack_calibration_params([float(params[k]) for k in order])
+        calib_hash = codec.calibration_hash(params_blob)
+    packets = [
+        codec.build_hello(
+            stream_id=frame["stream_id"],
+            schema_version=frame["schema_version"],
+            feature_set_version=frame["feature_set_version"],
+            producer_version=str(frame.get("producer_version", "0")) + "+replay",
+            model_id=frame.get("model_id", "replay"),
+            config_hash=frame.get("config_hash", "0" * 32),
+            contract_id=frame["contract_id"],
+            calibration_generation=int(frame.get("calibration_generation", 0)),
+            calibration_state=str(frame.get("calibration_state", "valid")),
+            calib_hash=calib_hash,
+            effective_from_frame_id=int(frame.get("calibration_effective_from", 0)),
+            frame_w=int(frame.get("frame_w", 0)),
+            frame_h=int(frame.get("frame_h", 0)),
+        )
+    ]
+    if params:
+        packets.append(
+            codec.build_calibration(
+                stream_id=frame["stream_id"],
+                generation=int(frame["calibration_generation"]),
+                calib_hash=calib_hash,
+                effective_from_frame_id=int(frame.get("calibration_effective_from", 0)),
+                params_blob=params_blob,
+            )
+        )
+    return packets
+
+
+def _frame_to_wire(codec: Any, frame: Mapping[str, Any], first_seq: int) -> list[bytes]:
+    bundles: list[bytes] = []
+    seq = first_seq
+    persons = frame.get("persons") or []
+    for person in persons:
+        person = _pad_person_features(dict(person))
+        if not person.get("present"):
+            payload = {"slot_id": int(person["slot_id"]), "present": False}
+        else:
+            kps = [(float(k[0]), float(k[1]), float(k[2])) for k in person["keypoints"]]
+            kst = [(int(s[0]), int(s[1]), int(s[2])) for s in person["kp_state"]]
+            payload = {
+                "slot_id": int(person["slot_id"]),
+                "present": True,
+                "focused": bool(person.get("focused")),
+                "keypoints_blob": codec.pack_keypoints(kps),
+                "kp_state_blob": codec.pack_kp_state(kst),
+                "bbox": person.get("bbox_xywhn") or [0.0, 0.0, 0.0, 0.0],
+                "features_blob": codec.pack_features(
+                    [0.0 if v is None else float(v) for v in person["features"]]
+                ),
+                "feat_state_blob": codec.pack_feat_state(
+                    [int(v) for v in person["feat_state"]]
+                ),
+            }
+        bundles.append(
+            codec.build_person_bundle(
+                stream_id=frame["stream_id"],
+                captured_frame_id=int(frame.get("captured_frame_id", seq)),
+                bundle_seq=seq,
+                n_persons=int(frame.get("n_persons", len(persons))),
+                fps=float(frame.get("fps", 30.0)),
+                contract_id=str(frame.get("contract_id", "")),
+                calibration_generation=int(frame.get("calibration_generation", 0)),
+                calibration_state=str(frame.get("calibration_state", "valid")),
+                captured_at_us=int(frame.get("captured_at_us", 0)),
+                processed_at_us=int(frame.get("processed_at_us", 0)),
+                queued_for_send_at_us=0,
+                person=payload,
+            )
+        )
+        seq += 1
+    return bundles
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Harmonic Weaver live rehearsal runtime")
+    parser = argparse.ArgumentParser(description="Harmonic Weaver live/offline rehearsal runtime")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--report-root", type=Path, default=REPO_ROOT / "reports")
-    parser.add_argument("--run-id", required=True)
-    parser.add_argument("--artifact-root", type=Path, required=True)
-    parser.add_argument("--beacon-manifest", type=Path, required=True)
-    parser.add_argument("--shaper-manifest", type=Path, required=True)
+    parser.add_argument("--run-id", default=None, help="required for live mode; default offline-<ts> for --replay")
+    parser.add_argument("--artifact-root", type=Path, default=None)
+    parser.add_argument(
+        "--beacon-manifest",
+        type=Path,
+        default=_default_sibling("beacon-spatial") / "beacon_spatial.contract.json",
+    )
+    parser.add_argument(
+        "--shaper-manifest",
+        type=Path,
+        default=_default_sibling("harmonic-shaper") / "contracts" / "shaper.contract.json",
+    )
     parser.add_argument("--beacon-host", default="127.0.0.1")
     parser.add_argument("--beacon-port", type=int, default=57120)
     parser.add_argument("--shaper-host", default="127.0.0.1")
@@ -244,11 +489,158 @@ def build_parser() -> argparse.ArgumentParser:
         "latch the source gate as permanently absent",
     )
     parser.add_argument("--log-level", default="info")
+    parser.add_argument(
+        "--scene",
+        default=None,
+        help="scene name (under rehearsal/scenes/) or path; required with --replay",
+    )
+    parser.add_argument(
+        "--replay",
+        type=Path,
+        default=None,
+        help="hardware-free mode: replay a HarMoCAP session .jsonl through the engine",
+    )
     return parser
+
+
+def run_offline_replay(args: argparse.Namespace) -> int:
+    """Hardware-free scene validation: install instruments, load scene, replay jsonl."""
+    if args.scene is None:
+        raise SystemExit("--scene is required with --replay")
+    if not args.shaper_manifest.is_file():
+        raise SystemExit(f"shaper manifest not found: {args.shaper_manifest}")
+    if not args.beacon_manifest.is_file():
+        raise SystemExit(f"beacon manifest not found: {args.beacon_manifest}")
+    if not args.replay.is_file():
+        raise SystemExit(f"replay jsonl not found: {args.replay}")
+
+    scene_path = resolve_scene_path(args.scene)
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    run_id = args.run_id or f"offline-{stamp}"
+    artifact_root = args.artifact_root or (REPO_ROOT / "rehearsal" / "artifacts" / run_id)
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    report_root = args.report_root
+    report_root.mkdir(parents=True, exist_ok=True)
+
+    output_audit = artifact_root / "instrument_outputs.jsonl"
+    if output_audit.exists():
+        output_audit.unlink()
+
+    report = ReportWriter(
+        report_root,
+        run_id=run_id,
+        run_config={
+            "mode": "offline_replay",
+            "scene": str(scene_path),
+            "replay": str(args.replay),
+            "drivers": ["harmocap"],
+            "instrument_transport": "live OSC/UDP (audit only; no hardware required)",
+        },
+    )
+    transport = LiveOSCTransport(
+        {
+            "beacon-spatial": (args.beacon_host, args.beacon_port),
+            "shaper": (args.shaper_host, args.shaper_port),
+        },
+        output_audit,
+    )
+    engine = WeaverEngine(transport=transport, report_writer=report)
+
+    beacon_manifest = load_json(args.beacon_manifest)
+    shaper_manifest = load_json(args.shaper_manifest)
+    beacon_contract_id = contract_id_from_manifest(beacon_manifest)
+    shaper_contract_id = contract_id_from_manifest(shaper_manifest)
+    engine.install_instrument(beacon_manifest, beacon_safety_profile(beacon_contract_id))
+    engine.install_instrument(shaper_manifest, shaper_safety_profile(shaper_contract_id))
+
+    # Offline: skip live Beacon OSC hello and Shaper HTTP state — gate with synthetic streams.
+    beacon_stream = _stream_id()
+    shaper_stream = _stream_id()
+    if not engine.instrument_hello("beacon-spatial", beacon_stream, beacon_contract_id):
+        raise RuntimeError("Beacon offline hello rejected")
+    if not engine.instrument_sync_complete("beacon-spatial", beacon_stream, beacon_contract_id):
+        raise RuntimeError("Beacon offline sync rejected")
+    if not engine.instrument_hello("shaper", shaper_stream, shaper_contract_id):
+        raise RuntimeError("Shaper offline hello rejected")
+    if not engine.instrument_sync_complete("shaper", shaper_stream, shaper_contract_id):
+        raise RuntimeError("Shaper offline sync rejected")
+
+    harmocap_src = harmocap_manifest(lease_ms=max(args.lease_ms, 60_000.0))
+    harmocap_contract = engine.install_source(harmocap_src)
+    harmocap_stream = _stream_id()
+    if not engine.source_hello("harmocap", harmocap_stream, harmocap_contract):
+        raise RuntimeError("harmocap source hello rejected")
+
+    scene = load_json(scene_path)
+    engine.upsert_scene(scene, engine.stage_revision)
+    engine.switch_scene(scene["scene_id"], int(scene["scene_version"]), engine.stage_revision)
+
+    codec = _load_kit_codec()
+    frames: list[dict[str, Any]] = []
+    with args.replay.open(encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if line:
+                frames.append(json.loads(line))
+    if not frames:
+        raise SystemExit(f"replay file is empty: {args.replay}")
+
+    driver = HarMoCAPDriver(on_frame=engine.driver_callback, lease_ms=max(args.lease_ms, 60_000.0))
+    # Monotonic driver clock so leases and dt-based transforms stay well-defined.
+    now_ms = 1_000_000.0
+    seq = 0
+    handshake_sent = False
+    last_stream: str | None = None
+
+    for frame_index, frame in enumerate(frames):
+        stream = str(frame.get("stream_id", "replay"))
+        if not handshake_sent or stream != last_stream or frame_index % 30 == 0:
+            for packet in _handshake_bytes(codec, frame):
+                driver.handle_datagram(packet, now_ms=now_ms)
+            handshake_sent = True
+            last_stream = stream
+        for packet in _frame_to_wire(codec, frame, first_seq=seq + 1):
+            seq += 1
+            driver.handle_datagram(packet, now_ms=now_ms)
+        # ~30 Hz frame spacing for slew/derivative dt.
+        now_ms += 33.0
+
+    records = transport.records
+    caps: dict[str, int] = {}
+    for record in records:
+        if record.capability:
+            caps[record.capability] = caps.get(record.capability, 0) + 1
+
+    summary = {
+        "run_id": run_id,
+        "scene_id": scene["scene_id"],
+        "scene_path": str(scene_path),
+        "replay": str(args.replay),
+        "frames": len(frames),
+        "instrument_writes": int(engine.metrics.get("instrument_writes", 0)),
+        "transport_errors": int(engine.metrics.get("transport_errors", 0)),
+        "frames_accepted": int(engine.metrics.get("frames_accepted", 0)),
+        "capability_counts": caps,
+        "audit_path": str(output_audit),
+        "arp_entries": sum(1 for name, count in caps.items() if name.startswith("arp_") for _ in range(count)),
+    }
+    atomic_json(artifact_root / "offline_replay_summary.json", summary)
+    engine.close()
+
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    if summary["instrument_writes"] <= 0:
+        raise SystemExit("offline replay produced no instrument writes")
+    if not any(name.startswith("arp_") for name in caps):
+        raise SystemExit("offline replay produced no arp_* capability writes")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.replay is not None:
+        return run_offline_replay(args)
+    if args.run_id is None or args.artifact_root is None:
+        raise SystemExit("live mode requires --run-id and --artifact-root (or use --replay)")
     args.artifact_root.mkdir(parents=True, exist_ok=True)
     output_audit = args.artifact_root / "instrument_outputs.jsonl"
     report = ReportWriter(

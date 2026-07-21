@@ -57,8 +57,10 @@ def test_real_manifests_safety_profiles_and_both_scenes_compile() -> None:
 
     demo = load_json(ROOT / "rehearsal" / "scenes" / "event_demo.scene.json")
     sparse = load_json(ROOT / "rehearsal" / "scenes" / "sparse.scene.json")
+    instrumento = load_json(ROOT / "rehearsal" / "scenes" / "instrumento_v1_mvp.scene.json")
     engine.upsert_scene(demo, engine.stage_revision)
     engine.upsert_scene(sparse, engine.stage_revision)
+    engine.upsert_scene(instrumento, engine.stage_revision)
     engine.switch_scene("event-demo", 1, engine.stage_revision)
 
     snapshot = engine.snapshot(["routes", "instruments"])
@@ -71,6 +73,21 @@ def test_real_manifests_safety_profiles_and_both_scenes_compile() -> None:
         5,
     }
     assert all(route["runtime"]["active"] for route in snapshot["routes"])
+
+    engine.switch_scene("instrumento-v1-mvp", 1, engine.stage_revision)
+    instrument_snapshot = engine.snapshot(["routes"])
+    assert len(instrument_snapshot["routes"]) == 12
+    caps = {route["destination"]["capability"] for route in instrument_snapshot["routes"]}
+    assert {
+        "partial_ceiling",
+        "arp_rate",
+        "arp_direction",
+        "arp_density",
+        "clock_bpm",
+        "generator_enable",
+        "arp_enable",
+    } <= caps
+    assert all(route["runtime"]["active"] for route in instrument_snapshot["routes"])
 
 
 def test_live_osc_transport_audits_engine_frozen_route_bindings(
@@ -188,16 +205,18 @@ def test_rehearsal_scenes_express_required_event_sources() -> None:
 def test_harmocap_manifest_matches_producer_feature_ranges() -> None:
     """S13 regression: HarMoCAP schema.FEATURE_RANGES declares verticality as
     signed (-1..1); the runtime manifest must not clamp it to (0,1), or live
-    frames raise engine range-validation errors."""
+    frames raise engine range-validation errors. tempo_bpm is producer BPM
+    (0..240), not unit-normalized."""
     manifest = harmocap_manifest()
     ranges = {spec["name"]: tuple(spec["range"]) for spec in manifest["channels"]}
     for slot in range(8):
         assert ranges[f"slot_{slot}_verticality"] == (-1.0, 1.0)
+        assert ranges[f"slot_{slot}_tempo_bpm"] == (0.0, 240.0)
     # All other features stay normalized (0..1).
     for name, bounds in ranges.items():
         if "_keypoint_" in name or name.endswith(("_present", "_focused")):
             continue
-        if name.endswith("_verticality"):
+        if name.endswith("_verticality") or name.endswith("_tempo_bpm"):
             continue
         assert bounds == (0.0, 1.0), name
 
