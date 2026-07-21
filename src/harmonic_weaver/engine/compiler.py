@@ -193,6 +193,7 @@ class RouteRuntime:
     slew_at_us: dict[int, int] = field(default_factory=dict)
     derivative_values: dict[int, float] = field(default_factory=dict)
     derivative_at_us: dict[int, int] = field(default_factory=dict)
+    beat_state: dict[int, dict] = field(default_factory=dict)
     last_usable_output: float | None = None
     last_usable_at_us: int | None = None
     invalid_reset_sent: bool = False
@@ -421,6 +422,7 @@ def compile_route(
             "phase_accumulator",
             "slew_limiter",
             "derivative",
+            "beat_envelope",
         }:
             raise validation(f"{tpath}.type is invalid")
         if kind == "combine":
@@ -488,6 +490,23 @@ def compile_route(
             max_abs = positive(transform.get("max_abs"), f"{tpath}.max_abs")
             nonnegative(transform.get("max_dt_ms"), f"{tpath}.max_dt_ms")
             current_range = (-max_abs, max_abs)
+        elif kind == "beat_envelope":
+            # Rising-edge trigger -> decaying gain envelope: on each edge the
+            # output snaps to `peak` and relaxes toward `floor` with a time
+            # constant (auto-scaled from the measured inter-beat interval, or a
+            # fixed `tau_ms`). Output is bounded to [floor, peak].
+            peak = finite(transform.get("peak", 1.0), f"{tpath}.peak")
+            floor_value = finite(transform.get("floor", 0.0), f"{tpath}.floor")
+            if floor_value >= peak:
+                raise validation(f"{tpath}.floor must be less than {tpath}.peak")
+            finite(transform.get("threshold", 0.5), f"{tpath}.threshold")
+            if "tau_ratio" in transform:
+                positive(transform["tau_ratio"], f"{tpath}.tau_ratio")
+            if "tau_ms" in transform:
+                positive(transform["tau_ms"], f"{tpath}.tau_ms")
+            if "min_interval_ms" in transform:
+                nonnegative(transform["min_interval_ms"], f"{tpath}.min_interval_ms")
+            current_range = (floor_value, peak)
     validity_policy = validate_validity(raw["validity"], f"{path}.validity")
     definition = copy.deepcopy(dict(raw))
     definition["validity"] = validity_policy
@@ -677,6 +696,40 @@ def evaluate_route(
             runtime.derivative_values[transform_index] = current
             runtime.derivative_at_us[transform_index] = now_us
             current = out
+        elif kind == "beat_envelope":
+            assert isinstance(current, float)
+            peak = float(transform.get("peak", 1.0))
+            floor_value = float(transform.get("floor", 0.0))
+            threshold = float(transform.get("threshold", 0.5))
+            tau_ratio = float(transform.get("tau_ratio", 0.3))
+            fixed_tau_ms = transform.get("tau_ms")
+            min_interval_us = int(float(transform.get("min_interval_ms", 250.0)) * 1000)
+            state = runtime.beat_state.get(transform_index)
+            if state is None:
+                state = {
+                    "value": floor_value, "beat_us": None, "eval_us": None,
+                    "last_in": 0.0,
+                    "tau_ms": float(fixed_tau_ms) if fixed_tau_ms is not None else 250.0,
+                }
+            # Decay toward floor over the time since the last evaluation.
+            if state["eval_us"] is not None:
+                dt_s = max(0.0, (now_us - state["eval_us"]) / 1_000_000.0)
+                tau_s = max(1e-3, state["tau_ms"] / 1000.0)
+                state["value"] = floor_value + (state["value"] - floor_value) * math.exp(-dt_s / tau_s)
+            # Rising edge -> fire the pulse (with a refractory guard).
+            fired = state["last_in"] < threshold <= current
+            if fired and (state["beat_us"] is None or now_us - state["beat_us"] >= min_interval_us):
+                if fixed_tau_ms is not None:
+                    state["tau_ms"] = float(fixed_tau_ms)
+                elif state["beat_us"] is not None:
+                    interval_ms = (now_us - state["beat_us"]) / 1000.0
+                    state["tau_ms"] = max(1.0, tau_ratio * interval_ms)
+                state["value"] = peak
+                state["beat_us"] = now_us
+            state["last_in"] = current
+            state["eval_us"] = now_us
+            runtime.beat_state[transform_index] = state
+            current = state["value"]
     if isinstance(current, list) or not math.isfinite(current):
         return None, "suppress"
     runtime.last_usable_output = current
