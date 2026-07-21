@@ -78,7 +78,7 @@ OSC_NAMESPACE = "/harmocap/v1"
 SOURCE_ID_DEFAULT = "harmocap"
 N_SLOTS = 8
 N_KEYPOINTS = 17
-N_FEATURES = 21
+N_FEATURES = 24     # contrato 1.3 (feature_set 1.1): +tempo_bpm/beat_phase/tempo_conf
 N_CALIB_PARAMS = 6
 LEASE_MS_DEFAULT = 2000.0
 LAYOUT_VERSION = "1"
@@ -129,6 +129,9 @@ FEATURE_NAMES: tuple[str, ...] = (
     "laban_weight_proxy",
     "laban_time_proxy",
     "laban_space_proxy",
+    "tempo_bpm",
+    "beat_phase",
+    "tempo_conf",
 )
 
 # CORE_DESIGN §2 cites this as the kinetic-energy channel; it aliases feature 18.
@@ -138,10 +141,10 @@ KINETIC_ENERGY_ALIAS = "kinetic_energy"
 OnFrame = Callable[[str, dict[str, tuple[float, int, float]]], None]
 
 # Copied from harmocap-nico-kit/osc_codec.py
-# sha256: 465f33f4de77e96ef15a841b776865cb5218a1132d789d5ae928b0f9b6fa3dd4
+# sha256: 57ce3c93bd34d9dcc5a05eb7433aa9b09fb27cc810c6ff28e372cc4c865f35d9
 _CODEC_SOURCE = (
     "HarMoCAP/harmocap-nico-kit/osc_codec.py"
-    " sha256:465f33f4de77e96ef15a841b776865cb5218a1132d789d5ae928b0f9b6fa3dd4"
+    " sha256:57ce3c93bd34d9dcc5a05eb7433aa9b09fb27cc810c6ff28e372cc4c865f35d9"
 )
 
 
