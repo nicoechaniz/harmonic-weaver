@@ -147,9 +147,9 @@ def shaper_safety_profile(contract_id: str) -> dict[str, Any]:
     """Safety defaults for every Shaper destination a rehearsal scene may target.
 
     Includes legacy harmonic envelopes (event_demo / sparse) plus the cuerpo-
-    instrumento MVP surface: partial_ceiling, clock, settle, generator, arp/*.
-    Every route destination must appear here or scene compile raises
-    unsafe_instrument.
+    instrumento MVP surface: partial_ceiling, clock, settle, generator, arp/*
+    for hands H=0..3 (multi-body: body0→H0/H1, body1→H2/H3). Every route
+    destination must appear here or scene compile raises unsafe_instrument.
     """
     reset_defaults: list[dict[str, Any]] = [
         {
@@ -188,7 +188,8 @@ def shaper_safety_profile(contract_id: str) -> dict[str, Any]:
             },
         ]
     )
-    for hand in range(0, 2):
+    # Multi-body scene uses H=0..3 (body 0 → H=0,1; body 1 → H=2,3).
+    for hand in range(0, 4):
         reset_defaults.extend(
             [
                 {

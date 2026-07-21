@@ -76,7 +76,8 @@ def test_real_manifests_safety_profiles_and_both_scenes_compile() -> None:
 
     engine.switch_scene("instrumento-v1-mvp", 1, engine.stage_revision)
     instrument_snapshot = engine.snapshot(["routes"])
-    assert len(instrument_snapshot["routes"]) == 12
+    # Multi-body: body0 H=0+H=1, body1 H=2+H=3, shared ceiling/clock/static setup.
+    assert len(instrument_snapshot["routes"]) == 36
     caps = {route["destination"]["capability"] for route in instrument_snapshot["routes"]}
     assert {
         "partial_ceiling",
@@ -87,6 +88,12 @@ def test_real_manifests_safety_profiles_and_both_scenes_compile() -> None:
         "generator_enable",
         "arp_enable",
     } <= caps
+    arp_hands = {
+        route["destination"]["bindings"].get("H")
+        for route in instrument_snapshot["routes"]
+        if route["destination"]["capability"].startswith("arp_")
+    }
+    assert {0, 1, 2, 3} <= arp_hands
     assert all(route["runtime"]["active"] for route in instrument_snapshot["routes"])
 
 
