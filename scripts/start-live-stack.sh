@@ -446,10 +446,48 @@ echo "  Ctrl-C here stops everything; from another shell:"
 echo "    $0 --stop $RUN_ID"
 echo
 
-# Wait for any child to exit; if one dies, bring the stack down.
-wait -n "${PIDS[@]}" 2>/dev/null
-EXIT_CODE=$?
-log "a component exited (status $EXIT_CODE); stopping the stack"
+# ---- HarMoCAP supervisor: restart on crash, keep audio alive ---------------
+# Weaver, Shaper, or Beacon exiting takes the whole stack down.
+HARMOCAP_RESTARTS=0
+HARMOCAP_MAX_RESTARTS=${HARMOCAP_MAX_RESTARTS:-5}
+HARMOCAP_BACKOFF_S=3
+
+while true; do
+    wait -n "${PIDS[@]}" 2>/dev/null
+    EXIT_CODE=$?
+    EXITED=""
+    for (( i=0; i<${#PIDS[@]}; i++ )); do
+        if ! kill -0 "${PIDS[$i]}" 2>/dev/null; then
+            EXITED="${NAMES[$i]}"
+            unset "PIDS[$i]"
+            unset "NAMES[$i]"
+            break
+        fi
+    done
+    PIDS=("${PIDS[@]}")
+    NAMES=("${NAMES[@]}")
+
+    if [ "$EXITED" = "harmocap" ]; then
+        HARMOCAP_RESTARTS=$((HARMOCAP_RESTARTS + 1))
+        if [ "$HARMOCAP_RESTARTS" -gt "$HARMOCAP_MAX_RESTARTS" ]; then
+            log "HarMoCAP crashed $HARMOCAP_RESTARTS times; max $HARMOCAP_MAX_RESTARTS — audio stays, camera lost"
+            continue
+        fi
+        log "HarMoCAP exited (code $EXIT_CODE) — restart $HARMOCAP_RESTARTS/$HARMOCAP_MAX_RESTARTS in ${HARMOCAP_BACKOFF_S}s"
+        sleep "$HARMOCAP_BACKOFF_S"
+        HARMOCAP_BACKOFF_S=$((HARMOCAP_BACKOFF_S + 2))
+        (cd "$HARMOCAP_DIR" && env "${HARMOCAP_ENV[@]}" "$HARMOCAP_VENV/bin/python" scripts/run_realtime.py "${HARMOCAP_ARGS[@]}")             > "$LOG_DIR/harmocap.log" 2>&1 &
+        PIDS+=("$!")
+        NAMES+=("harmocap")
+        echo "$! harmocap" >> "$PIDFILE"
+        log "HarMoCAP restarted (pid $!)"
+    elif [ -z "$EXITED" ]; then
+        continue
+    else
+        log "$EXITED exited (code $EXIT_CODE); stopping the stack"
+        break
+    fi
+done
+
 cleanup
 trap - INT TERM
-exit "$EXIT_CODE"
