@@ -189,6 +189,8 @@ class RouteRuntime:
     gate_states: dict[int, bool] = field(default_factory=dict)
     phase_values: dict[int, float] = field(default_factory=dict)
     phase_at_us: dict[int, int] = field(default_factory=dict)
+    slew_values: dict[int, float] = field(default_factory=dict)
+    slew_at_us: dict[int, int] = field(default_factory=dict)
     last_usable_output: float | None = None
     last_usable_at_us: int | None = None
     invalid_reset_sent: bool = False
@@ -408,7 +410,15 @@ def compile_route(
         if not isinstance(transform, Mapping):
             raise validation(f"{tpath} must be an object")
         kind = transform.get("type")
-        if kind not in {"scale_range", "curve", "smoothing", "gate", "combine", "phase_accumulator"}:
+        if kind not in {
+            "scale_range",
+            "curve",
+            "smoothing",
+            "gate",
+            "combine",
+            "phase_accumulator",
+            "slew_limiter",
+        }:
             raise validation(f"{tpath}.type is invalid")
         if kind == "combine":
             if index != 0 or len(inputs) == 1:
@@ -459,6 +469,11 @@ def compile_route(
             if "max_dt_ms" in transform:
                 nonnegative(transform["max_dt_ms"], f"{tpath}.max_dt_ms")
             current_range = (0.0, wrap_deg)
+        elif kind == "slew_limiter":
+            # Rate-limited chase of a continuous target. Output stays inside the
+            # incoming static range (does not expand or shrink bounds).
+            positive(transform.get("max_rate"), f"{tpath}.max_rate")
+            nonnegative(transform.get("max_dt_ms"), f"{tpath}.max_dt_ms")
     validity_policy = validate_validity(raw["validity"], f"{path}.validity")
     definition = copy.deepcopy(dict(raw))
     definition["validity"] = validity_policy
@@ -590,6 +605,31 @@ def evaluate_route(
             runtime.phase_values[transform_index] = phase
             runtime.phase_at_us[transform_index] = now_us
             current = phase
+        elif kind == "slew_limiter":
+            assert isinstance(current, float)
+            target = current
+            max_rate = float(transform["max_rate"])
+            max_dt_s = float(transform["max_dt_ms"]) / 1000.0
+            previous_value = runtime.slew_values.get(transform_index)
+            previous_at_us = runtime.slew_at_us.get(transform_index)
+            if previous_value is None or previous_at_us is None:
+                # Cold start: no history — snap to target (do not invent a dt).
+                out = target
+            else:
+                dt_s = max(0.0, (now_us - previous_at_us) / 1_000_000.0)
+                # Clamp dt so a network gap cannot jump the parameter.
+                if dt_s > max_dt_s:
+                    dt_s = max_dt_s
+                max_delta = max_rate * dt_s
+                delta = target - previous_value
+                if delta > max_delta:
+                    delta = max_delta
+                elif delta < -max_delta:
+                    delta = -max_delta
+                out = previous_value + delta
+            runtime.slew_values[transform_index] = out
+            runtime.slew_at_us[transform_index] = now_us
+            current = out
     if isinstance(current, list) or not math.isfinite(current):
         return None, "suppress"
     runtime.last_usable_output = current

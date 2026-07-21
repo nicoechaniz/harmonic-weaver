@@ -1,5 +1,6 @@
 # Bitácora — harmonic-weaver
 
+- 2026-07-21: add `slew_limiter` transform (rate-limited chase of a continuous target; `max_rate` + `max_dt_ms` gap clamp; cold-start snaps to target). Core convergence primitive for cuerpo-como-instrumento. 8 tests in `tests/test_transforms_slew.py`; CORE_DESIGN updated. Branch `main`.
 - 2026-07-18: repo scaffolded.
 - 2026-07-19: add `phase_accumulator` transform (velocity→wrapped phase integrator) for the Latido laser-cymatics piece; compiler validation + range propagation + stateful runtime, 10 tests, docs. Branch `feat/phase-accumulator-transform`.
 - 2026-07-19: Event-demo and sparse scenes now route HarMoCAP gains through Shaper `harmonic_envelope` rather than the passive `harmonic_gain` parameter. The safety profile resets those envelopes to zero. The rehearsal assertion now follows the declared capability rather than a historical capability name.
