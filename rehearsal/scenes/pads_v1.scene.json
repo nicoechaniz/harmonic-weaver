@@ -268,8 +268,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -310,8 +311,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -352,8 +354,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -394,8 +397,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -436,8 +440,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -478,8 +483,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -520,8 +526,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -562,8 +569,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -604,8 +612,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -646,8 +655,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -688,8 +698,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -730,8 +741,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -772,8 +784,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -814,8 +827,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -856,8 +870,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -898,8 +913,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -940,8 +956,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -982,8 +999,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1024,8 +1042,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1066,8 +1085,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1108,8 +1128,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1150,8 +1171,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1192,8 +1214,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1234,8 +1257,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1276,8 +1300,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1318,8 +1343,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1360,8 +1386,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1402,8 +1429,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1444,8 +1472,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1486,8 +1515,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1528,8 +1558,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1570,8 +1601,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1612,8 +1644,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1654,8 +1687,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1696,8 +1730,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1738,8 +1773,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1780,8 +1816,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1822,8 +1859,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1864,8 +1902,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1906,8 +1945,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1948,8 +1988,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -1990,8 +2031,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2032,8 +2074,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2074,8 +2117,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2116,8 +2160,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2158,8 +2203,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2200,8 +2246,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2242,8 +2289,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2284,8 +2332,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2326,8 +2375,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2368,8 +2418,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2410,8 +2461,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2452,8 +2504,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2494,8 +2547,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2536,8 +2590,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2578,8 +2633,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2620,8 +2676,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2662,8 +2719,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2704,8 +2762,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2746,8 +2805,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2788,8 +2848,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2830,8 +2891,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2872,8 +2934,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     },
     {
@@ -2914,8 +2977,9 @@
       },
       "validity": {
         "held": "reject",
-        "invalid": "release",
-        "min_confidence": 0.5
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.5,
+        "hold_ms": 150.0
       }
     }
   ],
