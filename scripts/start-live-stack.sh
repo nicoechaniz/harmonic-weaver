@@ -298,13 +298,15 @@ if ! "$WEAVER_VENV/bin/python" -c 'import fastapi, websockets, pythonosc, numpy,
     (cd "$WEAVER_DIR" && uv sync --extra rehearsal --extra test) || fail "uv sync failed"
 fi
 
-# Shaper venv: create + editable install if missing.
+# Shaper venv: create + editable install.  Always refresh the editable link
+# so source changes (poly gain, envelope times, etc.) are live on every run.
 if [ "$DO_SHAPER" -eq 1 ]; then
     if ! "$SHAPER_VENV/bin/python" -c 'import sounddevice, fastapi, librosa' 2>/dev/null; then
         log "bootstrapping shaper venv ($SHAPER_VENV)"
         [ -x "$SHAPER_VENV/bin/python" ] || python3 -m venv "$SHAPER_VENV" || fail "venv creation failed"
-        "$SHAPER_VENV/bin/pip" install -q -e "$SHAPER_DIR" || fail "shaper editable install failed"
     fi
+    log "refreshing shaper editable install"
+    "$SHAPER_VENV/bin/pip" install -q -e "$SHAPER_DIR" || fail "shaper editable install failed"
 fi
 
 # HarMoCAP venv must pre-exist (torch build is deliberate, cu124 on this host).
