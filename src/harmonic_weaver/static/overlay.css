@@ -18,7 +18,6 @@ body {
   height: 100vh;
   max-width: calc(100vh*16/9);
   max-height: calc(100vw*9/16);
-  transform: scaleX(-1);   /* mirror so left/right matches the dancer's perspective */
 }
 
 /* webcam element: invisible but still laid out so it keeps producing frames */

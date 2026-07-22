@@ -188,14 +188,53 @@ function drawGrid() {
 }
 
 // ---------------------------------------------------------------------------
+// Hand position dots — HarMoCAP detected wrist positions
+// ---------------------------------------------------------------------------
+function drawHandDot(sourceId, color) {
+  const xKey = sourceId.replace(/_[xy]$/, '_x');
+  const yKey = sourceId.replace(/_[xy]$/, '_y');
+  const x = handPos[xKey], y = handPos[yKey];
+  if (x == null || y == null) return;
+  const px = x * W;
+  // HarMoCAP Y=0 is top of image; canvas Y=0 is top → direct match
+  const py = y * H;
+  const r = 14;
+  gctx.beginPath();
+  gctx.arc(px, py, r, 0, Math.PI * 2);
+  gctx.fillStyle = color + '66';
+  gctx.fill();
+  gctx.strokeStyle = color;
+  gctx.lineWidth = 2.5;
+  gctx.stroke();
+  // crosshair
+  gctx.beginPath();
+  gctx.moveTo(px - r - 4, py); gctx.lineTo(px + r + 4, py);
+  gctx.moveTo(px, py - r - 4); gctx.lineTo(px, py + r + 4);
+  gctx.strokeStyle = '#fff';
+  gctx.lineWidth = 1;
+  gctx.stroke();
+}
+
+function drawHandDots() {
+  drawHandDot('hand_r_x', '#ff4466');  // red for right hand
+  drawHandDot('hand_l_x', '#44aaff');  // blue for left hand
+}
+
+// ---------------------------------------------------------------------------
 // Frame loop
 // ---------------------------------------------------------------------------
 function frame() {
   if (cameraState === 'live' && cam.readyState >= 2) {
+    // Mirror the camera feed horizontally (dancer's perspective)
+    bgctx.save();
+    bgctx.translate(W, 0);
+    bgctx.scale(-1, 1);
     try { bgctx.drawImage(cam, 0, 0, W, H); } catch (_e) { /* frame not ready */ }
+    bgctx.restore();
   }
   // else: bg holds the fallback drawn once at startup
   drawGrid();
+  drawHandDots();
   requestAnimationFrame(frame);
 }
 
@@ -242,6 +281,12 @@ const PAD_SOURCE_CHANNELS = {
   hand_r_pad: 'pad',
   hand_l_pad: 'pad',
 };
+const POS_SOURCE_CHANNELS = {
+  hand_r_x: 'x',
+  hand_r_y: 'y',
+  hand_l_x: 'x',
+  hand_l_y: 'y',
+};
 
 let ws = null;
 let reconnectTimer = null;
@@ -250,6 +295,8 @@ let requestSeq = 0;
 let stageGated = false;
 // Latest pad index per hand source (null = invalid / unknown).
 const handPads = { hand_r_pad: null, hand_l_pad: null };
+// Latest raw hand positions (0-1 in camera frame) — for drawing dots.
+const handPos = { hand_r_x: null, hand_r_y: null, hand_l_x: null, hand_l_y: null };
 
 function clientId() {
   try {
@@ -303,6 +350,13 @@ function recomputeWsPadsFromHands() {
 }
 
 function applyPadChannel(sourceId, channel, envelope) {
+  // Track raw hand positions for dot rendering
+  if (sourceId in handPos && channel === PAD_SOURCE_CHANNELS[sourceId]) {
+    if (envelope && typeof envelope.value === 'number') {
+      handPos[sourceId] = envelope.value;
+    }
+  }
+  // Track pad indices for grid highlighting
   if (!(sourceId in handPads)) return;
   if (channel !== PAD_SOURCE_CHANNELS[sourceId]) return;
   handPads[sourceId] = padIndexFromEnvelope(envelope);
@@ -315,6 +369,13 @@ function applySourcesSnapshot(sources) {
   for (const source of sources) {
     if (!source || typeof source !== 'object') continue;
     const sourceId = source.source_id;
+    // Position sources
+    if (sourceId in POS_SOURCE_CHANNELS) {
+      const ch = POS_SOURCE_CHANNELS[sourceId];
+      const env = source.channels?.[ch];
+      if (env && typeof env.value === 'number') handPos[sourceId] = env.value;
+    }
+    // Pad sources
     if (!(sourceId in handPads)) continue;
     const channel = PAD_SOURCE_CHANNELS[sourceId];
     const envelope = source.channels?.[channel];
@@ -328,6 +389,18 @@ function applySourceChannelsUpdated(payload) {
   if (!payload || typeof payload !== 'object') return;
   const entity = payload.entity || payload;
   const sourceId = entity.source_id || payload.entity_id;
+  // Handle position sources
+  if (sourceId in POS_SOURCE_CHANNELS) {
+    const channels = entity.channels;
+    if (channels && typeof channels === 'object') {
+      const ch = POS_SOURCE_CHANNELS[sourceId];
+      if (ch in channels) {
+        const env = channels[ch];
+        if (env && typeof env.value === 'number') handPos[sourceId] = env.value;
+      }
+    }
+  }
+  // Handle pad sources
   if (!(sourceId in handPads)) return;
   const channels = entity.channels;
   if (!channels || typeof channels !== 'object') return;
@@ -436,6 +509,7 @@ function connectWS() {
   requestSeq = 0;
   handPads.hand_r_pad = null;
   handPads.hand_l_pad = null;
+  for (const k of Object.keys(handPos)) handPos[k] = null;
   wsState = 'connecting';
   updateStatus();
   let socket;
