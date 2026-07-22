@@ -177,8 +177,8 @@
       "cols": 4,
       "rows": 8,
       "serpentine": true,
-      "x_min": 0.0,
-      "x_max": 1.0,
+      "x_min": 1.0,
+      "x_max": 0.0,
       "y_min": 1.0,
       "y_max": 0.0,
       "cadence": {
@@ -211,8 +211,8 @@
       "cols": 4,
       "rows": 8,
       "serpentine": true,
-      "x_min": 0.0,
-      "x_max": 1.0,
+      "x_min": 1.0,
+      "x_max": 0.0,
       "y_min": 1.0,
       "y_max": 0.0,
       "cadence": {
@@ -2916,6 +2916,39 @@
         "held": "reject",
         "invalid": "release",
         "min_confidence": 0.5
+      }
+    },
+    {
+      "route_id": "master-gain-safe",
+      "route_version": 1,
+      "enabled": true,
+      "inputs": [
+        {
+          "channel": "hand_r_pad.pad"
+        }
+      ],
+      "transforms": [
+        {
+          "type": "gate",
+          "mode": "rising_edge",
+          "threshold": -1.0,
+          "closed": {
+            "value": 0.45
+          },
+          "hysteresis": 0.0
+        }
+      ],
+      "destination": {
+        "instrument_id": "shaper",
+        "capability": "master_gain",
+        "bindings": {},
+        "argument": "gain"
+      },
+      "validity": {
+        "held": "accept",
+        "hold_ms": 5000.0,
+        "invalid": "hold_then_reset",
+        "min_confidence": 0.0
       }
     }
   ],

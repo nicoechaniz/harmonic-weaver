@@ -100,9 +100,9 @@ def test_real_manifests_safety_profiles_and_both_scenes_compile() -> None:
 
     engine.switch_scene("pads-v1", 1, engine.stage_revision)
     pads_snapshot = engine.snapshot(["routes", "sources"])
-    assert len(pads_snapshot["routes"]) == 64
+    assert len(pads_snapshot["routes"]) == 65  # 64 pads + 1 master_gain
     pad_caps = {route["destination"]["capability"] for route in pads_snapshot["routes"]}
-    assert pad_caps == {"harmonic_envelope", "harmonic_gain"}
+    assert pad_caps == {"harmonic_envelope", "harmonic_gain", "master_gain"}
     source_ids = {item["source_id"] for item in pads_snapshot["sources"]}
     assert {"hand_r_pad", "hand_l_pad"} <= source_ids
     assert all(route["runtime"]["active"] for route in pads_snapshot["routes"])

@@ -277,7 +277,7 @@ def shaper_safety_profile(contract_id: str) -> dict[str, Any]:
             "capability": "master_gain",
             "bindings": {},
             "argument": "gain",
-            "value": 0.8,
+            "value": 0.15,
         }
     )
     return {
