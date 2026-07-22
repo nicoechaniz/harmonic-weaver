@@ -171,15 +171,15 @@ if [ -n "$STOP_TARGET" ]; then
     # Pids are stored in reverse launch order already (last started first).
     while read -r pid name; do
         if kill -0 "$pid" 2>/dev/null; then
-            echo "[stop] SIGTERM $name (pid $pid)"
-            kill "$pid" 2>/dev/null
+            echo "[stop] SIGTERM $name (pid $pid, pgrp)"
+            kill -- -"$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')" 2>/dev/null
         fi
     done < "$PF"
     sleep 3
     while read -r pid name; do
         if kill -0 "$pid" 2>/dev/null; then
-            echo "[stop] SIGKILL $name (pid $pid)"
-            kill -9 "$pid" 2>/dev/null
+            echo "[stop] SIGKILL $name (pid $pid, pgrp)"
+            kill -9 -- -"$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')" 2>/dev/null
         fi
     done < "$PF"
     exit 0
@@ -195,21 +195,23 @@ NAMES=()
 register() { PIDS+=("$1"); NAMES+=("$2"); }
 
 cleanup() {
-    local i pid name
+    local i pid name pgid
     log "shutting down (run $RUN_ID)"
     for (( i=${#PIDS[@]}-1; i>=0; i-- )); do
         pid="${PIDS[$i]}"; name="${NAMES[$i]}"
         if kill -0 "$pid" 2>/dev/null; then
-            log "SIGTERM $name (pid $pid)"
-            kill "$pid" 2>/dev/null
+            pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
+            log "SIGTERM $name (pid $pid pgrp $pgid)"
+            kill -- -"$pgid" 2>/dev/null
         fi
     done
     sleep 3
     for (( i=${#PIDS[@]}-1; i>=0; i-- )); do
         pid="${PIDS[$i]}"; name="${NAMES[$i]}"
         if kill -0 "$pid" 2>/dev/null; then
-            log "SIGKILL $name (pid $pid)"
-            kill -9 "$pid" 2>/dev/null
+            pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
+            log "SIGKILL $name (pid $pid pgrp $pgid)"
+            kill -9 -- -"$pgid" 2>/dev/null
         fi
     done
 }
