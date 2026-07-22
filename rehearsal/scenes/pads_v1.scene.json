@@ -179,8 +179,8 @@
       "serpentine": true,
       "x_min": 1.0,
       "x_max": 0.0,
-      "y_min": 0.0,
-      "y_max": 1.0,
+      "y_min": 1.0,
+      "y_max": 0.0,
       "cadence": {
         "mode": "on_input",
         "max_rate_hz": 60.0
@@ -213,8 +213,8 @@
       "serpentine": true,
       "x_min": 1.0,
       "x_max": 0.0,
-      "y_min": 0.0,
-      "y_max": 1.0,
+      "y_min": 1.0,
+      "y_max": 0.0,
       "cadence": {
         "mode": "on_input",
         "max_rate_hz": 60.0
