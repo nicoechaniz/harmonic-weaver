@@ -195,14 +195,22 @@ NAMES=()
 register() { PIDS+=("$1"); NAMES+=("$2"); }
 
 cleanup() {
-    local i pid name pgid
+    local i pid name pgid my_pgid
+    trap '' INT TERM  # prevent recursion — we're already cleaning up
     log "shutting down (run $RUN_ID)"
+    my_pgid="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
     for (( i=${#PIDS[@]}-1; i>=0; i-- )); do
         pid="${PIDS[$i]}"; name="${NAMES[$i]}"
         if kill -0 "$pid" 2>/dev/null; then
             pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
-            log "SIGTERM $name (pid $pid pgrp $pgid)"
-            kill -- -"$pgid" 2>/dev/null
+            # Don't kill our own process group — that creates an infinite loop
+            if [ "$pgid" = "$my_pgid" ]; then
+                log "SIGTERM $name (pid $pid, same pgrp — killing pid only)"
+                kill "$pid" 2>/dev/null
+            else
+                log "SIGTERM $name (pid $pid pgrp $pgid)"
+                kill -- -"$pgid" 2>/dev/null
+            fi
         fi
     done
     sleep 3
@@ -210,8 +218,13 @@ cleanup() {
         pid="${PIDS[$i]}"; name="${NAMES[$i]}"
         if kill -0 "$pid" 2>/dev/null; then
             pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
-            log "SIGKILL $name (pid $pid pgrp $pgid)"
-            kill -9 -- -"$pgid" 2>/dev/null
+            if [ "$pgid" = "$my_pgid" ]; then
+                log "SIGKILL $name (pid $pid, same pgrp)"
+                kill -9 "$pid" 2>/dev/null
+            else
+                log "SIGKILL $name (pid $pid pgrp $pgid)"
+                kill -9 -- -"$pgid" 2>/dev/null
+            fi
         fi
     done
 }
