@@ -195,7 +195,9 @@ function drawHandDot(sourceId, color) {
   const yKey = sourceId.replace(/_[xy]$/, '_y');
   const x = handPos[xKey], y = handPos[yKey];
   if (x == null || y == null) return;
-  const px = x * W;
+  // Flip X to match mirrored camera (camera is scaleX(-1), so HarMoCAP's
+  // left-side detection maps to the right side of the mirrored view)
+  const px = (1 - x) * W;
   // HarMoCAP Y=0 is top of image; canvas Y=0 is top → direct match
   const py = y * H;
   const r = 14;
