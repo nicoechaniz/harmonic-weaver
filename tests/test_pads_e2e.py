@@ -193,7 +193,7 @@ def test_pads_v1_scene_structure_and_metadata() -> None:
     scene = load_json(PADS_SCENE)
     assert scene["scene_id"] == "pads-v1"
     assert len(scene["aggregators"]) == 6
-    assert len(scene["routes"]) == 65  # 64 pads + 1 master_gain
+    assert len(scene["routes"]) == 64
     derived = {item["derived_source_id"] for item in scene["aggregators"]}
     assert {
         "hand_r_x",
@@ -241,7 +241,7 @@ def test_pads_v1_compiles_with_real_manifests(
 ) -> None:
     engine, _transport, scene = _ready_pads_engine(tmp_path, monkeypatch)
     snapshot = engine.snapshot(["routes", "sources"])
-    assert len(snapshot["routes"]) == 65  # 64 pads + 1 master_gain
+    assert len(snapshot["routes"]) == 64
     assert all(route["runtime"]["active"] for route in snapshot["routes"])
     source_ids = {item["source_id"] for item in snapshot["sources"]}
     assert {"harmocap", "hand_r_pad", "hand_l_pad", "hand_r_x", "hand_l_x"} <= source_ids
