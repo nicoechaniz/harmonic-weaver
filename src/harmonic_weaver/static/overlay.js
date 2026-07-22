@@ -121,7 +121,9 @@ function drawGrid() {
     for (let row = 0; row < ROWS; row++) {
       const idx = padIndex(col, row);
       const harmonic = idx + 1;
-      const x = gap + col * (cellW + gap);
+      // Flip columns visually so grid matches mirrored camera
+      const visualCol = COLS - 1 - col;
+      const x = gap + visualCol * (cellW + gap);
       const canvasRow = ROWS - 1 - row;  // row 0 = bottom in model, canvas y=0 is top
       const y = gap + canvasRow * (cellH + gap);
 
@@ -156,7 +158,8 @@ function drawGrid() {
   gctx.setLineDash([8, 12]);
 
   for (let col = 0; col < COLS; col++) {
-    const cx = gap + col * (cellW + gap) + cellW / 2;
+    const visualCol = COLS - 1 - col;
+    const cx = gap + visualCol * (cellW + gap) + cellW / 2;
     const y0 = gap + cellH / 2;
     const y1 = H - gap - cellH / 2;
 
@@ -166,7 +169,8 @@ function drawGrid() {
     gctx.stroke();
 
     if (col < COLS - 1) {
-      const nx = gap + (col + 1) * (cellW + gap) + cellW / 2;
+      const nVisualCol = COLS - 1 - (col + 1);
+      const nx = gap + nVisualCol * (cellW + gap) + cellW / 2;
       const connectY = col % 2 === 0 ? y0 : y1;
       gctx.beginPath();
       gctx.moveTo(cx, connectY);
@@ -181,7 +185,8 @@ function drawGrid() {
   gctx.font = '600 14px ui-monospace, SFMono, monospace';
   gctx.textAlign = 'center';
   for (let col = 0; col < COLS; col++) {
-    const cx = gap + col * (cellW + gap) + cellW / 2;
+    const visualCol = COLS - 1 - col;
+    const cx = gap + visualCol * (cellW + gap) + cellW / 2;
     const dir = col % 2 === 0 ? '↑' : '↓';
     gctx.fillText(`col ${col + 1} ${dir}`, cx, H - 8);
   }
@@ -195,9 +200,9 @@ function drawHandDot(sourceId, color) {
   const yKey = sourceId.replace(/_[xy]$/, '_y');
   const x = handPos[xKey], y = handPos[yKey];
   if (x == null || y == null) return;
-  // Flip X to match mirrored camera (camera is scaleX(-1), so HarMoCAP's
-  // left-side detection maps to the right side of the mirrored view)
-  const px = (1 - x) * W;
+  // Grid matches HarMoCAP coordinates (both unflipped); camera is only
+  // flipped for visual comfort — dots stay at HarMoCAP positions.
+  const px = x * W;
   // HarMoCAP Y=0 is top of image; canvas Y=0 is top → direct match
   const py = y * H;
   const r = 14;
@@ -245,7 +250,8 @@ function frame() {
 // ---------------------------------------------------------------------------
 function padAt(px, py) {
   for (let col = 0; col < COLS; col++) {
-    const x = gap + col * (cellW + gap);
+    const visualCol = COLS - 1 - col;
+    const x = gap + visualCol * (cellW + gap);
     if (px < x || px > x + cellW) continue;
     for (let row = 0; row < ROWS; row++) {
       const canvasRow = ROWS - 1 - row;
